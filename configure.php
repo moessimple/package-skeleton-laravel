@@ -245,7 +245,7 @@ $say(<<<TXT
 
     Review the changes with git status and commit them. GitHub does not copy repository settings
     from a template: add a ruleset for main that requires the status checks lint, static,
-    dependencies and tests. The ruleset blocks the changelog workflow: update CHANGELOG.md yourself
-    after a release.
+    security and tests. The ruleset also rejects direct pushes to main, so the changelog workflow
+    fails. Update CHANGELOG.md through a pull request after each release.
 
     TXT);
