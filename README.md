@@ -24,7 +24,7 @@ package-header:end -->
     <a href="https://github.com/moessimple/package-skeleton-laravel/actions/workflows/security.yml"><img src="https://github.com/moessimple/package-skeleton-laravel/actions/workflows/security.yml/badge.svg?branch=main" alt="Security"></a>
 </p>
 
-## Using This Template
+## Introduction
 
 A template for Laravel 12 and 13 packages on PHP 8.4 or newer. It comes with:
 
@@ -33,16 +33,19 @@ A template for Laravel 12 and 13 packages on PHP 8.4 or newer. It comes with:
 - GitHub Actions for lint, static analysis, a weekly security audit, and tests across PHP 8.4 and 8.5, Laravel 12 and 13, lowest and newest dependencies, on Linux and Windows, and one that adds the notes of each published GitHub release to `CHANGELOG.md`
 - an Orchestra Testbench workbench (`composer serve`) and a Laravel Boost skill for apps that install the package
 
-To start a package:
+## Getting Started
+
+> **Requires PHP 8.4+, Composer 2.10+, and a code coverage driver like
+> [Xdebug](https://xdebug.org/docs/install) or [PCOV](https://github.com/krakjoe/pcov).**
 
 1. Create a repository with **Use this template** and clone it.
-2. Run the configure script. It needs PHP 8.4 or newer.
+2. Run the configure script.
 
     ```bash
     php configure.php
     ```
 
-    The script asks for the package and author details and shows what it will change. After you confirm, it replaces the placeholders (`vendor-name/laravel-package-name`, `VendorName\PackageName`, `Author Name`) in all file contents and names, and deletes itself. It then runs `composer install`, `composer lint` and `composer test`.
+    The script asks for the package and author details and shows what it will change. After you confirm, it turns the template into your package, installs the dependencies and runs the full quality gate.
 
     To run it without questions, for example from a coding agent, pass `--no-interaction` and the answers as options. `php configure.php --help` lists them.
 
@@ -50,34 +53,7 @@ To start a package:
     php configure.php --no-interaction --vendor=acme --package=laravel-example --author-name="Jane Doe" --author-email=jane@example.com
     ```
 
-3. GitHub does not copy repository settings from a template:
-
-    - Add a ruleset for `main` that requires the status checks `lint`, `static`, `dependencies` and `tests`. The changelog workflow pushes its `CHANGELOG.md` commit to `main` with the `GITHUB_TOKEN`, which a ruleset cannot exempt: with the ruleset in place, commit that update yourself after a release.
-    - Create the release-note labels `breaking`, `enhancement`, `bug`, `documentation`, `dependencies`, `maintenance`, `skip-changelog` and `duplicate`.
-
-## Available Tooling
-
-### Development
-
-- `composer serve`: builds the workbench and serves a Laravel app with the package installed.
-- `composer build`: builds the workbench without serving it: publishes the assets and migrates a fresh SQLite database.
-
-### Security
-
-- `composer test:audit`: checks the installed dependencies for known vulnerabilities and abandoned packages.
-
-### Code Quality
-
-- `composer lint`: Rector and Pint, fixing in place.
-- `composer test:lint`: the same checks read-only (Rector `--dry-run`, Pint `--test`).
-- `composer test:composer`: validates `composer.json` strictly.
-
-### Testing
-
-- `composer test:types`: PHPStan at `level: max` over the package, tests and workbench.
-- `composer test:type-coverage`: fails under 100% type coverage (Pest).
-- `composer test:unit`: Pest in parallel under an exact 100% line-coverage gate.
-- `composer test`: the full gate, in order: `composer.json` validation, audit, lint, type coverage, static analysis, tests.
+3. GitHub does not copy repository settings from a template. Add a ruleset for `main` that requires the status checks `lint`, `static`, `dependencies` and `tests`, so a failing check blocks the merge. The ruleset also blocks the workflow that adds release notes to `CHANGELOG.md`: update it yourself after a release.
 
 Everything below this section is the README of your package. The configure script removes this section.
 
@@ -132,11 +108,29 @@ use VendorName\PackageName\Facades\PackageName;
 // Add a basic usage example here.
 ```
 
-## Testing
+## Available Tooling
 
-```bash
-composer test
-```
+### Development
+
+- `composer serve`: builds the workbench and serves a Laravel app with the package installed.
+- `composer build`: builds the workbench without serving it: publishes the assets and migrates a fresh SQLite database.
+
+### Security
+
+- `composer test:audit`: checks the installed dependencies for known vulnerabilities and abandoned packages.
+
+### Code Quality
+
+- `composer lint`: Rector and Pint, fixing in place.
+- `composer test:lint`: the same checks read-only (Rector `--dry-run`, Pint `--test`).
+- `composer test:composer`: validates `composer.json` strictly.
+
+### Testing
+
+- `composer test:types`: PHPStan at `level: max` over the package, tests and workbench.
+- `composer test:type-coverage`: fails under 100% type coverage (Pest).
+- `composer test:unit`: Pest in parallel under an exact 100% line-coverage gate.
+- `composer test`: the full gate, in order: `composer.json` validation, audit, lint, type coverage, static analysis, tests.
 
 ## Changelog
 

@@ -245,7 +245,7 @@ $say(<<<TXT
 
     Review the changes with git status and commit them. GitHub does not copy repository settings
     from a template: add a ruleset for main that requires the status checks lint, static,
-    dependencies and tests, and create the release-note labels listed in .github/release.yml. The
-    ruleset blocks the changelog workflow's push: update CHANGELOG.md yourself after a release.
+    dependencies and tests. The ruleset blocks the changelog workflow: update CHANGELOG.md yourself
+    after a release.
 
     TXT);
