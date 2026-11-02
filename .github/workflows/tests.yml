@@ -1,0 +1,99 @@
+name: tests
+
+on:
+  push:
+    branches:
+      - main
+      - '*.x'
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  coverage:
+    # composer test:unit: the Pest suite under an exact 100% line-coverage gate. Lint, static
+    # analysis and type coverage are their own workflows so a formatting nit and a real failure
+    # are separate red checks.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup package
+        uses: ./.github/actions/setup-package
+        with:
+          coverage: xdebug
+
+      - name: Tests with coverage
+        run: composer test:unit
+
+  matrix:
+    # Every supported Laravel and PHP combination, at the lowest and newest allowed dependency
+    # versions. No coverage here: the gate above already enforces it once.
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        php: ['8.4', '8.5']
+        laravel: [12.*, 13.*]
+        stability: [prefer-lowest, prefer-stable]
+        include:
+          - laravel: 12.*
+            testbench: 10.*
+          - laravel: 13.*
+            testbench: 11.*
+
+    name: P${{ matrix.php }} - L${{ matrix.laravel }} - ${{ matrix.stability }} - ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: dom, curl, libxml, mbstring, zip, fileinfo, sqlite, pdo_sqlite, bcmath, intl
+          ini-values: error_reporting=E_ALL
+          tools: composer:v2
+          coverage: none
+
+      # pestphp/pest-plugin-phpstan requires Pest 5, which conflicts with Testbench 10 (Laravel 12).
+      # Only the static analysis workflow uses it, so the matrix drops it.
+      - name: Drop static analysis only dev dependencies
+        run: composer remove pestphp/pest-plugin-phpstan --dev --no-update --no-interaction
+
+      - name: Install dependencies
+        run: |
+          composer require "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" --no-interaction --no-update
+          composer update --${{ matrix.stability }} --prefer-dist --no-interaction --no-progress
+
+      - name: Tests
+        run: vendor/bin/pest --ci
+
+  tests:
+    # The single check a ruleset requires for this workflow, so the required checks do not change
+    # with the matrix. Runs always, because a skipped job counts as passed for a required check.
+    if: ${{ always() }}
+    needs: [coverage, matrix]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Require every test job to pass
+        if: ${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped') }}
+        run: exit 1

@@ -1,0 +1,50 @@
+name: static analysis
+
+on:
+  push:
+    branches:
+      - main
+      - '*.x'
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  static:
+    # composer test:types: PHPStan (Larastan) at level max over the package, tests and workbench.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup package
+        uses: ./.github/actions/setup-package
+
+      # As in https://phpstan.org/user-guide/result-cache: cache entries cannot be updated, so
+      # each run saves under its own key, also after a failing analysis, and restore-keys loads
+      # the most recent one. PHPStan discards it when its config, version or dependencies change.
+      - name: Restore PHPStan result cache
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: build/phpstan
+          key: ${{ runner.os }}-phpstan-${{ github.run_id }}
+          restore-keys: ${{ runner.os }}-phpstan-
+
+      - name: Static analysis
+        run: composer test:types
+
+      - name: Save PHPStan result cache
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        if: ${{ !cancelled() }}
+        with:
+          path: build/phpstan
+          key: ${{ runner.os }}-phpstan-${{ github.run_id }}

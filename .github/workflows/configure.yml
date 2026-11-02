@@ -1,0 +1,45 @@
+name: configure
+
+on:
+  push:
+    branches:
+      - main
+      - '*.x'
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  configure:
+    # Turns the template into a package as a user would. configure.php ends with composer test, so
+    # this fails when the renamed package no longer installs or passes its quality gate.
+    # configure.php deletes this workflow, and the condition skips it in repositories created from
+    # the template before they run configure.php.
+    if: ${{ github.repository == 'moessimple/package-skeleton-laravel' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962 # v2
+        with:
+          # The lowest version configure.php accepts.
+          php-version: '8.4'
+          extensions: dom, curl, libxml, mbstring, zip, fileinfo, sqlite, pdo_sqlite, bcmath, intl
+          ini-values: error_reporting=E_ALL
+          tools: composer:v2
+          # composer test:unit measures line coverage.
+          coverage: xdebug
+
+      - name: Configure the template
+        run: php configure.php --no-interaction --vendor=acme --package=laravel-example --author-name="Jane Doe" --author-email=jane@example.com

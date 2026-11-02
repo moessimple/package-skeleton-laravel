@@ -1,0 +1,114 @@
+{
+    "$schema": "https://getcomposer.org/schema.json",
+    "name": "vendor-name/laravel-package-name",
+    "description": "Package Name",
+    "keywords": [
+        "laravel",
+        "vendor-name",
+        "package-name"
+    ],
+    "homepage": "https://github.com/vendor-name/laravel-package-name",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Author Name",
+            "email": "author@example.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^8.4",
+        "illuminate/support": "^12.0||^13.0",
+        "spatie/laravel-package-tools": "^1.93"
+    },
+    "require-dev": {
+        "driftingly/rector-laravel": "^2.7",
+        "larastan/larastan": "^3.9",
+        "laravel/pao": "^1.0",
+        "laravel/pint": "^1.29",
+        "orchestra/testbench": "^10.0||^11.0",
+        "pestphp/pest": "^4.6||^5.0",
+        "pestphp/pest-plugin-laravel": "^4.1||^5.0",
+        "pestphp/pest-plugin-phpstan": "^5.3",
+        "pestphp/pest-plugin-type-coverage": "^4.0||^5.0",
+        "rector/rector": "^2.8"
+    },
+    "autoload": {
+        "psr-4": {
+            "VendorName\\PackageName\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "VendorName\\PackageName\\Tests\\": "tests/",
+            "Workbench\\App\\": "workbench/app/",
+            "Workbench\\Database\\Factories\\": "workbench/database/factories/",
+            "Workbench\\Database\\Seeders\\": "workbench/database/seeders/"
+        }
+    },
+    "scripts": {
+        "post-autoload-dump": [
+            "@clear",
+            "@prepare"
+        ],
+        "prepare": [
+            "@php vendor/bin/testbench package:discover --ansi"
+        ],
+        "build": [
+            "@php vendor/bin/testbench workbench:build --ansi"
+        ],
+        "serve": [
+            "Composer\\Config::disableProcessTimeout",
+            "@build",
+            "@php vendor/bin/testbench serve --ansi"
+        ],
+        "lint": [
+            "rector",
+            "pint --parallel"
+        ],
+        "test:lint": [
+            "rector --dry-run",
+            "pint --parallel --test"
+        ],
+        "test:type-coverage": "pest --type-coverage --min=100",
+        "test:types": "phpstan",
+        "test:unit": [
+            "@putenv XDEBUG_MODE=coverage",
+            "pest --parallel --coverage --exactly=100.0"
+        ],
+        "test:audit": "@composer audit",
+        "test": [
+            "@test:audit",
+            "@test:lint",
+            "@test:type-coverage",
+            "@test:types",
+            "@test:unit"
+        ],
+        "clear": [
+            "@php vendor/bin/testbench package:purge-skeleton --ansi"
+        ]
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "VendorName\\PackageName\\PackageNameServiceProvider"
+            ],
+            "aliases": {
+                "PackageName": "VendorName\\PackageName\\Facades\\PackageName"
+            }
+        }
+    },
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "pestphp/pest-plugin": true
+        },
+        "audit": {
+            "ignore-abandoned": [
+                "symplify/rule-doc-generator-contracts"
+            ]
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}
