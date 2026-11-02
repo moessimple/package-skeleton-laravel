@@ -21,6 +21,8 @@ For significant changes, please open an issue first so we can discuss the approa
 
 ## Setup
 
+You need PHP 8.4 or newer, Composer 2.10 or newer (older versions ignore the `policy` config, so `composer test:audit` fails on an abandoned dev dependency), and Xdebug or PCOV for line coverage.
+
 Clone your fork, then install the dev dependencies:
 
 ```bash

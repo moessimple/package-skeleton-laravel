@@ -16,8 +16,8 @@ concurrency:
 
 jobs:
   lint:
-    # composer test:lint: Rector (dry run) and Pint. composer test:type-coverage: Pest's 100%
-    # type-coverage gate over src/.
+    # composer test:composer: composer validate --strict. composer test:lint: Rector (dry run) and
+    # Pint. composer test:type-coverage: Pest's 100% type-coverage gate over src/.
     runs-on: ubuntu-latest
     timeout-minutes: 10
 
@@ -29,6 +29,9 @@ jobs:
 
       - name: Setup package
         uses: ./.github/actions/setup-package
+
+      - name: Validate composer.json
+        run: composer test:composer
 
       # As in https://getrector.com/documentation/cache-in-ci: cache entries cannot be updated, so
       # each run saves under its own key, also after a failing lint, and restore-keys loads the

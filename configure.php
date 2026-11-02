@@ -67,9 +67,25 @@ $run = function (string $command, string $purpose) use ($say, $fail): void {
     passthru($command, $exitCode);
 
     if ($exitCode !== 0) {
-        $fail("'{$command}' failed with exit code {$exitCode}. The package is already renamed: fix the problem, then run the remaining steps yourself (composer install, composer lint, composer test).");
+        $fail("'{$command}' failed with exit code {$exitCode}. The package is already renamed: fix the problem, then run the remaining steps yourself (composer install, composer lint, composer test). To undo the renaming instead, run: git restore . && git clean -fd");
     }
 };
+
+// Checked before any file changes, although only composer test, the last step, needs it.
+if (! extension_loaded('xdebug') && ! extension_loaded('pcov')) {
+    $fail('composer test needs Xdebug or PCOV for line coverage. Install one of them, then run the script again.');
+}
+
+exec("composer --version 2>{$nullDevice}", $composerVersion, $exitCode);
+
+if ($exitCode !== 0) {
+    $fail('Composer is not available as the composer command. Install it from https://getcomposer.org, then run the script again.');
+}
+
+// Older versions ignore the policy config, so composer test:audit fails on an abandoned dev dependency.
+if (preg_match('/Composer version (\d+\.\d+\.\d+)/', implode("\n", $composerVersion), $match) === 1 && version_compare($match[1], '2.10.0', '<')) {
+    $fail("composer test needs Composer 2.10 or newer, found {$match[1]}. Run composer self-update, then run the script again.");
+}
 
 chdir(__DIR__);
 
@@ -77,6 +93,10 @@ $files = array_filter(explode("\n", $git('ls-files')));
 
 if ($files === []) {
     $fail('No tracked files found. Run the script inside the repository you created from the template.');
+}
+
+if ($git('status --porcelain') !== '') {
+    $fail('The working tree has uncommitted changes. Commit or stash them first, so a failed run can be undone with git.');
 }
 
 preg_match('~[/:]([^/:]+)/([^/]+?)(?:\.git)?$~', $git('remote get-url origin'), $remote);
@@ -179,7 +199,8 @@ foreach (array_diff($files, $templateFiles) as $file) {
             '',
             $original,
         ),
-        'rector.php' => (string) preg_replace('/^.*(UnlinkFuncCallToFileFacadeDeleteRector|configure\.php runs before).*\n/m', '', $original),
+        'rector.php' => (string) preg_replace('/^.*(UnlinkFuncCallToFileFacadeDeleteRector|configure\.php).*\n/m', '', $original),
+        'phpstan.neon.dist' => (string) preg_replace('/^.*configure\.php\n/m', '', $original),
         default => $original,
     };
 
@@ -224,6 +245,7 @@ $say(<<<TXT
 
     Review the changes with git status and commit them. GitHub does not copy repository settings
     from a template: add a ruleset for main that requires the status checks lint, static,
-    dependencies and tests.
+    dependencies and tests, and create the release-note labels listed in .github/release.yml. The
+    ruleset blocks the changelog workflow's push: update CHANGELOG.md yourself after a release.
 
     TXT);

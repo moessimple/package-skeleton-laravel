@@ -38,7 +38,9 @@ jobs:
 
   matrix:
     # Every supported Laravel and PHP combination, at the lowest and newest allowed dependency
-    # versions. No coverage here: the gate above already enforces it once.
+    # versions. No coverage here: the gate above already enforces it once. Composer skips releases
+    # with security advisories, so prefer-lowest installs the lowest Laravel release without one:
+    # keep the illuminate/support floor in composer.json at that version.
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
 
@@ -72,8 +74,9 @@ jobs:
           tools: composer:v2
           coverage: none
 
-      # pestphp/pest-plugin-phpstan requires Pest 5, which conflicts with Testbench 10 (Laravel 12).
-      # Only the static analysis workflow uses it, so the matrix drops it.
+      # pestphp/pest-plugin-phpstan requires Pest 5, which requires symfony/process 8, while Testbench 10
+      # (Laravel 12) requires symfony/process 7, so the Laravel 12 lanes cannot install it. The matrix
+      # drops it and analyses only the package code.
       - name: Drop static analysis only dev dependencies
         run: composer remove pestphp/pest-plugin-phpstan --dev --no-update --no-interaction
 
@@ -82,8 +85,19 @@ jobs:
           composer require "laravel/framework:${{ matrix.laravel }}" "orchestra/testbench:${{ matrix.testbench }}" --no-interaction --no-update
           composer update --${{ matrix.stability }} --prefer-dist --no-interaction --no-progress
 
+      - name: List installed dependencies
+        run: composer show --direct
+
       - name: Tests
         run: vendor/bin/pest --ci
+
+      # Without pestphp/pest-plugin-phpstan PHPStan cannot analyse the Pest tests, so this checks
+      # only the shipped code. The static analysis workflow covers the rest.
+      - name: Static analysis of the package code
+        if: ${{ runner.os == 'Linux' }}
+        run: |
+          sed -i '/pest-plugin-phpstan/d' phpstan.neon.dist
+          vendor/bin/phpstan analyse config database routes src --no-progress
 
   tests:
     # The single check a ruleset requires for this workflow, so the required checks do not change

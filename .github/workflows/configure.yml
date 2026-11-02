@@ -21,8 +21,17 @@ jobs:
     # configure.php deletes this workflow, and the condition skips it in repositories created from
     # the template before they run configure.php.
     if: ${{ github.repository == 'moessimple/package-skeleton-laravel' }}
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 15
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+
+    defaults:
+      run:
+        shell: bash
 
     steps:
       - name: Checkout code
@@ -43,3 +52,10 @@ jobs:
 
       - name: Configure the template
         run: php configure.php --no-interaction --vendor=acme --package=laravel-example --author-name="Jane Doe" --author-email=jane@example.com
+
+      # --untracked includes the files configure.php renamed.
+      - name: Check that no placeholder is left
+        run: |
+          if git grep --untracked -nIE 'vendor-name|VendorName|PackageName|package-name|package_name|Package Name|Author Name|author@example\.com|moessimple'; then
+            exit 1
+          fi

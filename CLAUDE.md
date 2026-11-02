@@ -13,12 +13,13 @@ This repository is a Laravel package. Keep the package focused, idiomatic, and e
 
 ## Quick Commands
 
-- Full validation: `composer test` (audit, lint, type coverage, static analysis, tests)
+- Full validation: `composer test` (composer.json validation, audit, lint, type coverage, static analysis, tests)
 - Apply Rector and Pint fixes: `composer lint`
 - Lint check: `composer test:lint`
 - Static analysis (PHPStan max): `composer test:types`
 - Type coverage (100%): `composer test:type-coverage`
 - Pest with exact 100% line coverage: `composer test:unit`
+- composer.json validation: `composer test:composer`
 - Dependency audit: `composer test:audit`
 - Workbench build: `composer build`
 - Workbench server: `composer serve`

@@ -3,10 +3,18 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\ServiceProvider;
 use VendorName\PackageName\Facades\PackageName as PackageNameFacade;
 use VendorName\PackageName\PackageName;
 use VendorName\PackageName\PackageNameServiceProvider;
+
+it('declares the service provider and facade alias for package discovery', function (): void {
+    expect(data_get(File::json(dirname(__DIR__, 2).'/composer.json'), 'extra.laravel'))->toBe([
+        'providers' => [PackageNameServiceProvider::class],
+        'aliases' => ['PackageName' => PackageNameFacade::class],
+    ]);
+});
 
 it('binds the package class as a singleton', function (): void {
     expect(resolve(PackageName::class))->toBe(resolve(PackageName::class));

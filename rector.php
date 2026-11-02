@@ -40,6 +40,7 @@ return RectorConfig::configure()
         __DIR__.'/tests',
         __DIR__.'/workbench',
         __DIR__.'/rector.php',
+        __DIR__.'/configure.php',
     ])
     ->withSkip([
         MakeInheritedMethodVisibilitySameAsParentRector::class,
