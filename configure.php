@@ -82,9 +82,9 @@ if ($exitCode !== 0) {
     $fail('Composer is not available as the composer command. Install it from https://getcomposer.org, then run the script again.');
 }
 
-// Older versions ignore the policy config, so composer test:audit fails on an abandoned dev dependency.
-if (preg_match('/Composer version (\d+\.\d+\.\d+)/', implode("\n", $composerVersion), $match) === 1 && version_compare($match[1], '2.10.0', '<')) {
-    $fail("composer test needs Composer 2.10 or newer, found {$match[1]}. Run composer self-update, then run the script again.");
+// Older versions do not enforce the dependency cooldown.
+if (preg_match('/Composer version (\d+\.\d+\.\d+)/', implode("\n", $composerVersion), $match) === 1 && version_compare($match[1], '2.11.0', '<')) {
+    $fail("composer test needs Composer 2.11 or newer, found {$match[1]}. Run composer self-update, then run the script again.");
 }
 
 chdir(__DIR__);

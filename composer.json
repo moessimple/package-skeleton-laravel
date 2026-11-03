@@ -22,7 +22,7 @@
         "spatie/laravel-package-tools": "^1.93"
     },
     "require-dev": {
-        "composer": ">=2.10",
+        "composer-plugin-api": ">=2.11.0",
         "driftingly/rector-laravel": "^2.7",
         "larastan/larastan": "^3.9",
         "laravel/pao": "^1.0",
@@ -114,6 +114,9 @@
                         "reason": "Dev only: driftingly/rector-laravel requires it and has no replacement yet."
                     }
                 }
+            },
+            "cooldown": {
+                "period": "3 days"
             }
         }
     },

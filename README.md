@@ -35,7 +35,7 @@ A template for Laravel 12 and 13 packages on PHP 8.4 or newer. It comes with:
 
 ## Getting Started
 
-> **Requires PHP 8.4+, Composer 2.10+, and a code coverage driver like
+> **Requires PHP 8.4+, Composer 2.11+, and a code coverage driver like
 > [Xdebug](https://xdebug.org/docs/install) or [PCOV](https://github.com/krakjoe/pcov).**
 
 1. Create a repository with **Use this template** and clone it.
