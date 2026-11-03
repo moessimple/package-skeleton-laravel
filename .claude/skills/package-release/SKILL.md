@@ -2,8 +2,6 @@
 name: package-release
 description: "Use this skill when preparing Laravel package releases: choosing the version, tags, GitHub releases and their generated release notes, release validation, or release automation changes. Never publish autonomously."
 license: MIT
-metadata:
-  author: laravel
 ---
 
 # Package Release

@@ -2,8 +2,6 @@
 name: package-compatibility
 description: "Use this skill when reviewing Laravel package compatibility across composer constraints, PHP versions, Laravel versions, Testbench versions, dependency stability lanes, Windows CI, or matrix-sensitive code and workflow changes."
 license: MIT
-metadata:
-  author: laravel
 ---
 
 # Package Compatibility
