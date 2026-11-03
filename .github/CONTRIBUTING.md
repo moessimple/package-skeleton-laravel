@@ -33,10 +33,10 @@ composer install
 
 ## Dependency updates
 
-Composer waits three days before accepting new releases. Dependabot applies the
-same cooldown to regular version updates. Its security updates bypass that wait,
-but Composer still enforces its own cooldown. Review critical security fixes
-against the maintainer advisory, then use
+Composer waits three days before accepting new releases. Dependabot version
+updates cover only GitHub Actions and apply the same cooldown. Dependabot security
+updates bypass that wait, but Composer still enforces its own cooldown. Review
+critical security fixes against the maintainer advisory, then use
 `composer update --no-cooldown vendor/package` to install a reviewed fix immediately.
 Review the complete dependency diff: the flag applies to the whole command, including
 newly resolved dependencies. Advisory and malware blocking remain active.

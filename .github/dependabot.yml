@@ -16,10 +16,3 @@ updates:
         update-types:
           - "minor"
           - "patch"
-
-  - package-ecosystem: "composer"
-    directory: "/"
-    schedule:
-      interval: "weekly"
-    cooldown:
-      default-days: 3
