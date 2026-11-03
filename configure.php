@@ -244,8 +244,7 @@ $say(<<<TXT
     Done. {$vendor}/{$package} is configured and passes composer test.
 
     Review the changes with git status and commit them. GitHub does not copy repository settings
-    from a template: add a ruleset for main that requires the status checks lint, static,
-    security and tests. The ruleset also rejects direct pushes to main, so the changelog workflow
-    fails. Update CHANGELOG.md through a pull request after each release.
+    from a template: add a ruleset for main that requires a pull request before merging and
+    the status checks lint, static, security and tests.
 
     TXT);
