@@ -25,6 +25,17 @@ This repository is a Laravel package. Keep the package focused, idiomatic, and e
 - Workbench build: `composer build`
 - Workbench server: `composer serve`
 
+## Pull Requests
+
+- Use `.github/pull_request_template.md` as the body. Fill every section, remove the prompts, and lead with the problem and the resulting behavior.
+- Keep one task per pull request. Reuse an existing pull request for the same scope instead of opening a duplicate.
+- Work on a branch from an up-to-date `main`. Keep unrelated changes and temporary files out of the diff.
+- Reproduce a bug with a failing test before fixing it.
+- Record the exact results of `composer test` under Validation, and distinguish local checks from CI.
+- Review your own diff before publishing and remove debug code and temporary changes.
+- Push and open or update a pull request only when the user asked for it. Never merge or enable auto-merge without explicit approval.
+- If creating the pull request fails, check for an existing one before retrying. Report the URL, the final commit, what ran, and what is left open.
+
 ## Local Skills
 
 - `package-scaffold`: use when adding package capabilities or wiring them through the service provider, including commands, migrations, routes, config, views, translations, assets, middleware, publish tags, workbench files, and console-only behavior.
