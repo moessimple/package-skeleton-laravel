@@ -53,7 +53,7 @@ A template for Laravel 12 and 13 packages on PHP 8.4 or newer. It comes with:
     php configure.php --no-interaction --vendor=acme --package=laravel-example --author-name="Jane Doe" --author-email=jane@example.com
     ```
 
-3. GitHub does not copy repository settings from a template. Add a ruleset for `main` that requires a pull request before merging and the status checks `lint`, `static`, `security` and `tests`, so every change goes through a pull request and a failing check blocks the merge. Set the number of required approvals to fit your team.
+3. GitHub does not copy repository settings from a template. Add a ruleset for `main` that requires a pull request before merging and the status checks `lint`, `static`, `security` and `tests`, so a failing check blocks the merge. Set the number of required approvals to fit your team.
 
 Everything below is the README of your package. The configure script removes everything above this line and activates the package header.
 

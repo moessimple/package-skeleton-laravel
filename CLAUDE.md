@@ -6,34 +6,32 @@ This repository is a Laravel package. Keep the package focused, idiomatic, and e
 
 - Wire the package through `spatie/laravel-package-tools` in the service provider's `configurePackage()` and follow its conventions: config, views, translations, and publish tags use the package short name (`package-name`), translations live in `resources/lang`, assets in `resources/dist`.
 - Keep package names, namespaces, Composer metadata, publish tags, documentation, and examples aligned with `vendor-name/laravel-package-name`.
-- Add only the files and dependencies needed for the package behavior being implemented.
+- Add only the code, files, and dependencies the behavior needs: no speculative helpers, cache layers, or defensive checks.
 - Prefer explicit package code over helper abstractions unless the extension point is real.
-- Write the least code that does the job: no private helpers, cache layers, or defensive checks the behavior does not need.
-- Prefer Laravel collections and typed accessors (`collect()`, `$response->collect()`, `->integer()`, `->string()`) over hand-written array handling and casts.
+- Prefer Laravel collections and typed accessors over hand-written array handling and casts: `collect()`, `$response->collect()` and `$response->fluent()->integer('id')` for HTTP responses, `$request->string('name')`, `config()->string('package-name.key')`.
 - For large or repeated array shapes, define a `@phpstan-type` on the class that owns the data and reuse it with `@phpstan-import-type` instead of repeating the shape.
-- This package is public. Never write secrets, credentials, personal data, or internal details into code, comments, tests, commit messages, or pull requests.
+- Treat the repository as public. Never write secrets, credentials, personal data, or internal details into code, comments, tests, commit messages, or pull requests.
 - Keep tests focused on observable package behavior through public APIs, service provider wiring, commands, routes, published resources, and documentation promises.
 - Never lower the quality bar to get green: no PHPStan baseline or `ignoreErrors`, no `@codeCoverageIgnore`, no lowered coverage thresholds.
 
 ## External Services
 
-- Put every network service the package calls behind an interface in `src/Contracts`, named after the role it plays, not the vendor: `PaymentGateway`, not `Stripe`.
-- Name the implementation after vendor and role (`StripePaymentGateway`) and bind it to the interface in the service provider, so an application can swap it.
-- The interface speaks the package's language and describes returned shapes with `@phpstan-type`. Vendor URLs, payloads, and credentials stay inside the implementation.
-- Only the implementation reads its credentials, from the package config (`config('package-name.…')`), where it uses them.
+- Put a network service the package's behavior depends on behind an interface in `src/Contracts`, named after the role it plays, not the vendor: `PaymentGateway`, not `Stripe`. Tests bind a fake of the interface and applications can swap the vendor, so this extension point is real.
+- Name the implementation after vendor and role (`StripePaymentGateway`). Bind it in the service provider with a closure that reads its config with typed accessors (`config()->string('package-name.api_key')`) and passes the values to the constructor. Mark credential parameters with `#[\SensitiveParameter]`.
+- The interface speaks the package's language. It returns a small readonly value object or an array described with `@phpstan-type`. Vendor URLs and payloads stay inside the implementation.
 - Only the implementation's own tests fake HTTP with `Http::fake()`. Every other test binds a fake of the interface.
 
 ## Data
 
-- When two requests can pass the same check before a write (a limit, the last remaining record), lock the row with `lockForUpdate()` in a short `DB::transaction()` and check again under the lock.
-- Name every date or time column after the moment it records, ending in `_at`: `published_at`, not `publish_date`.
-- Never log secrets, tokens, request bodies, or personal data. Log identifiers and status codes.
-- Store sensitive content with Laravel's encrypted casts.
+- Guarantee uniqueness with a unique index, and handle a violation with `createOrFirst()` or by catching `UniqueConstraintViolationException`.
+- When a write depends on a check over other rows (a limit, the last remaining admin), lock the parent row with `lockForUpdate()` in a short `DB::transaction()` and check again under the lock, or use a conditional update and check the affected row count. Every writer must lock the same parent row. The SQLite test database ignores `lockForUpdate()`, so tests cannot prove the lock.
+- Name timestamp columns after the moment they record, ending in `_at`: `published_at`, not `publish_time`.
+- Hash passwords with the `hashed` cast. Store tokens the package looks up as `hash('sha256', $token)` in an indexed column, as Sanctum does, because a salted hash cannot be found with a query. Encrypt values it must read back, such as third-party credentials, with the `encrypted` cast in a `text` column. Encrypted columns cannot be filtered, indexed, or unique.
+- Never log secrets, tokens, request bodies, or personal data. Log identifiers and status codes. A `RequestException` message contains the start of the response body, so where a vendor response can carry sensitive data, catch it and throw a package exception without the body. Do not pass the `RequestException` as `previous`: the log includes previous exceptions.
 
 ## Quick Commands
 
 - Full validation: `composer test` (composer.json validation, audit, lint, type coverage, static analysis, tests)
-- Before reporting a change as done, run `composer test` and report each step's actual result. Name steps that failed or could not run instead of reporting success, and report pre-existing failures and environment blockers separately from failures the change introduced.
 - Apply Rector and Pint fixes: `composer lint`
 - Lint check: `composer test:lint`
 - Static analysis (PHPStan max): `composer test:types`
@@ -44,23 +42,28 @@ This repository is a Laravel package. Keep the package focused, idiomatic, and e
 - Workbench build: `composer build`
 - Workbench server: `composer serve`
 
+## Before Reporting Done
+
+- Run `composer test` and report each step's actual result. Name steps that failed or could not run instead of reporting success.
+- Report pre-existing failures and environment blockers separately from failures the change introduced.
+
 ## GitHub Workflows
 
 - Workflows only read the code and report a result. Declare `permissions: contents: read` at the top level and never raise it; a feature that needs write access does not run in GitHub Actions.
 - Trigger only on `push`, `pull_request`, `schedule`, or `workflow_dispatch`, never on `pull_request_target`, `workflow_run`, or comment and issue events.
 - Never interpolate `${{ github.event.* }}`, `${{ github.head_ref }}`, or other user-controlled values into `run:`. Pass them through `env:`.
-- Use no secrets. Nothing in this repository deploys or publishes from a workflow.
-- Pin third-party actions to a full commit SHA with the version in a comment, and only use actions from GitHub or from the vendor of the installed tool.
+- Use no secrets.
+- Pin every action outside this repository to a full commit SHA with the version in a comment. Use actions from GitHub (`actions/*`) and `shivammathur/setup-php`; add another one only with its reason in the pull request.
 - Check out with `persist-credentials: false`, run on GitHub-hosted runners, and give every job a `timeout-minutes`.
-- Review every change under `.github/` for its permissions, triggers, secrets, and interpolations before anything else.
+- Review changes under `.github/` against these rules first.
 
 ## Pull Requests
 
-- Use `.github/pull_request_template.md` as the body. Fill every section, remove the prompts, and lead with the problem and the resulting behavior.
+- Give the pull request a title that describes the change for users: the release notes are generated from pull request titles.
+- Use `.github/pull_request_template.md` as the body, remove its prompts, and lead with the problem and the resulting behavior.
 - Keep one task per pull request. Reuse an existing pull request for the same scope instead of opening a duplicate.
 - Work on a branch from an up-to-date `main`. Keep unrelated changes and temporary files out of the diff.
-- Reproduce a bug with a failing test before fixing it.
-- Record the exact results of `composer test` under Validation, and distinguish local checks from CI.
+- Put the `composer test` results under Validation, local checks apart from CI.
 - Review your own diff before publishing and remove debug code and temporary changes.
 - Push and open or update a pull request only when the user asked for it. Never merge or enable auto-merge without explicit approval.
 - If creating the pull request fails, check for an existing one before retrying. Report the URL, the final commit, what ran, and what is left open.
