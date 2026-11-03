@@ -57,6 +57,14 @@ This repository is a Laravel package. Keep the package focused, idiomatic, and e
 - Check out with `persist-credentials: false`, run on GitHub-hosted runners, and give every job a `timeout-minutes`.
 - Review changes under `.github/` against these rules first.
 
+## Reviews
+
+- Review a change once, against its goal, for correctness and missing tests, not style.
+- Re-review only after fixing Critical or Required findings, and only to check those fixes.
+- Stop when no Critical or Required finding is open. Optional findings and nits do not start another round; fix them or list them under Limitations.
+- If a Critical or Required finding is still open after the second round, stop and hand it to the user.
+- Count a finding only when code, documentation, or a test backs it.
+
 ## Pull Requests
 
 - Give the pull request a title that describes the change for users: the release notes are generated from pull request titles.
