@@ -244,7 +244,7 @@ $say(<<<TXT
     Done. {$vendor}/{$package} is configured and passes composer test.
 
     Review the changes with git status and commit them. GitHub does not copy repository settings
-    from a template: add a ruleset for main that requires the status checks lint, static,
-    security and tests.
+    from a template: add a ruleset for main that requires a pull request before merging and
+    the status checks lint, static, security and tests.
 
     TXT);
