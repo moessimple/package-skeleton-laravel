@@ -15,6 +15,7 @@ For significant changes, please open an issue first so we can discuss the approa
 
 - Apply Rector and Pint fixes by running `composer lint`.
 - Ensure `composer test` passes. It requires PHPStan at level max and exactly 100% line and type coverage.
+- Give the pull request a title that describes the change for users. The release notes are generated from pull request titles.
 - Send a coherent commit history, making sure each commit in your pull request is meaningful.
 - You may need to [rebase](https://git-scm.com/book/en/v2/Git-Branching-Rebasing) to avoid merge conflicts.
 - Please remember that we follow [SemVer](http://semver.org/).
