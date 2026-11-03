@@ -14,6 +14,7 @@ This repository is a Laravel package. Keep the package focused, idiomatic, and e
 ## Quick Commands
 
 - Full validation: `composer test` (composer.json validation, audit, lint, type coverage, static analysis, tests)
+- Before reporting a change as done, run `composer test` and report each step's actual result. Name steps that failed or could not run instead of reporting success.
 - Apply Rector and Pint fixes: `composer lint`
 - Lint check: `composer test:lint`
 - Static analysis (PHPStan max): `composer test:types`
