@@ -8,13 +8,32 @@ This repository is a Laravel package. Keep the package focused, idiomatic, and e
 - Keep package names, namespaces, Composer metadata, publish tags, documentation, and examples aligned with `vendor-name/laravel-package-name`.
 - Add only the files and dependencies needed for the package behavior being implemented.
 - Prefer explicit package code over helper abstractions unless the extension point is real.
+- Write the least code that does the job: no private helpers, cache layers, or defensive checks the behavior does not need.
+- Prefer Laravel collections and typed accessors (`collect()`, `$response->collect()`, `->integer()`, `->string()`) over hand-written array handling and casts.
+- For large or repeated array shapes, define a `@phpstan-type` on the class that owns the data and reuse it with `@phpstan-import-type` instead of repeating the shape.
+- This package is public. Never write secrets, credentials, personal data, or internal details into code, comments, tests, commit messages, or pull requests.
 - Keep tests focused on observable package behavior through public APIs, service provider wiring, commands, routes, published resources, and documentation promises.
 - Never lower the quality bar to get green: no PHPStan baseline or `ignoreErrors`, no `@codeCoverageIgnore`, no lowered coverage thresholds.
+
+## External Services
+
+- Put every network service the package calls behind an interface in `src/Contracts`, named after the role it plays, not the vendor: `PaymentGateway`, not `Stripe`.
+- Name the implementation after vendor and role (`StripePaymentGateway`) and bind it to the interface in the service provider, so an application can swap it.
+- The interface speaks the package's language and describes returned shapes with `@phpstan-type`. Vendor URLs, payloads, and credentials stay inside the implementation.
+- Only the implementation reads its credentials, from the package config (`config('package-name.…')`), where it uses them.
+- Only the implementation's own tests fake HTTP with `Http::fake()`. Every other test binds a fake of the interface.
+
+## Data
+
+- When two requests can pass the same check before a write (a limit, the last remaining record), lock the row with `lockForUpdate()` in a short `DB::transaction()` and check again under the lock.
+- Name every date or time column after the moment it records, ending in `_at`: `published_at`, not `publish_date`.
+- Never log secrets, tokens, request bodies, or personal data. Log identifiers and status codes.
+- Store sensitive content with Laravel's encrypted casts.
 
 ## Quick Commands
 
 - Full validation: `composer test` (composer.json validation, audit, lint, type coverage, static analysis, tests)
-- Before reporting a change as done, run `composer test` and report each step's actual result. Name steps that failed or could not run instead of reporting success.
+- Before reporting a change as done, run `composer test` and report each step's actual result. Name steps that failed or could not run instead of reporting success, and report pre-existing failures and environment blockers separately from failures the change introduced.
 - Apply Rector and Pint fixes: `composer lint`
 - Lint check: `composer test:lint`
 - Static analysis (PHPStan max): `composer test:types`
@@ -24,6 +43,16 @@ This repository is a Laravel package. Keep the package focused, idiomatic, and e
 - Dependency audit: `composer test:audit`
 - Workbench build: `composer build`
 - Workbench server: `composer serve`
+
+## GitHub Workflows
+
+- Workflows only read the code and report a result. Declare `permissions: contents: read` at the top level and never raise it; a feature that needs write access does not run in GitHub Actions.
+- Trigger only on `push`, `pull_request`, `schedule`, or `workflow_dispatch`, never on `pull_request_target`, `workflow_run`, or comment and issue events.
+- Never interpolate `${{ github.event.* }}`, `${{ github.head_ref }}`, or other user-controlled values into `run:`. Pass them through `env:`.
+- Use no secrets. Nothing in this repository deploys or publishes from a workflow.
+- Pin third-party actions to a full commit SHA with the version in a comment, and only use actions from GitHub or from the vendor of the installed tool.
+- Check out with `persist-credentials: false`, run on GitHub-hosted runners, and give every job a `timeout-minutes`.
+- Review every change under `.github/` for its permissions, triggers, secrets, and interpolations before anything else.
 
 ## Pull Requests
 
