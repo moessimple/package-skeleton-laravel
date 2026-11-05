@@ -82,7 +82,7 @@ if ($exitCode !== 0) {
     $fail('Composer is not available as the composer command. Install it from https://getcomposer.org, then run the script again.');
 }
 
-// Older versions do not enforce the dependency cooldown.
+// composer.json requires Composer 2.11 (composer-plugin-api), so fail early with a clear message.
 if (preg_match('/Composer version (\d+\.\d+\.\d+)/', implode("\n", $composerVersion), $match) === 1 && version_compare($match[1], '2.11.0', '<')) {
     $fail("composer test needs Composer 2.11 or newer, found {$match[1]}. Run composer self-update, then run the script again.");
 }
@@ -178,7 +178,7 @@ $say(<<<TXT
          delete configure.php and the workflow that tests it.
       3. Install the dependencies (composer install).
       4. Apply the Rector and Pint fixes the renaming needs, such as re-sorted imports (composer lint).
-      5. Run the quality gate: audit, lint, type coverage, static analysis and tests (composer test).
+      5. Run the quality gate: lint, type coverage, static analysis and tests (composer test).
 
     TXT);
 
@@ -245,6 +245,6 @@ $say(<<<TXT
 
     Review the changes with git status and commit them. GitHub does not copy repository settings
     from a template: add a ruleset for main that requires a pull request before merging and
-    the status checks lint, static, security and tests.
+    the status checks lint, static and tests.
 
     TXT);

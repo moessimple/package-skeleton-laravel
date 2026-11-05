@@ -81,7 +81,6 @@
         "test:composer": "@composer validate --strict --no-check-lock",
         "test": [
             "@test:composer",
-            "@test:audit",
             "@test:lint",
             "@test:type-coverage",
             "@test:types",
@@ -114,9 +113,6 @@
                         "reason": "Dev only: driftingly/rector-laravel requires it and has no replacement yet."
                     }
                 }
-            },
-            "cooldown": {
-                "period": "3 days"
             }
         }
     },

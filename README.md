@@ -21,7 +21,6 @@ package-header:end -->
     <a href="https://github.com/moessimple/package-skeleton-laravel/actions/workflows/tests.yml"><img src="https://github.com/moessimple/package-skeleton-laravel/actions/workflows/tests.yml/badge.svg?branch=main" alt="Tests"></a>
     <a href="https://github.com/moessimple/package-skeleton-laravel/actions/workflows/static.yml"><img src="https://github.com/moessimple/package-skeleton-laravel/actions/workflows/static.yml/badge.svg?branch=main" alt="Static analysis"></a>
     <a href="https://github.com/moessimple/package-skeleton-laravel/actions/workflows/lint.yml"><img src="https://github.com/moessimple/package-skeleton-laravel/actions/workflows/lint.yml/badge.svg?branch=main" alt="Lint"></a>
-    <a href="https://github.com/moessimple/package-skeleton-laravel/actions/workflows/security.yml"><img src="https://github.com/moessimple/package-skeleton-laravel/actions/workflows/security.yml/badge.svg?branch=main" alt="Security"></a>
 </p>
 
 ## Introduction
@@ -29,8 +28,8 @@ package-header:end -->
 A template for Laravel 12 and 13 packages on PHP 8.4 or newer. It comes with:
 
 - a service provider built on [spatie/laravel-package-tools](https://github.com/spatie/laravel-package-tools), with placeholder config, views, translations, assets, migration, route file and Artisan command
-- one quality gate, `composer test`: `composer validate`, dependency audit, Rector and Pint, 100% type coverage, PHPStan at level max, and Pest with exactly 100% line coverage
-- GitHub Actions for lint, static analysis, a weekly security audit, and tests across PHP 8.4 and 8.5, Laravel 12 and 13, lowest and newest dependencies, on Linux and Windows
+- one quality gate, `composer test`: `composer validate`, Rector and Pint, 100% type coverage, PHPStan at level max, and Pest with exactly 100% line coverage
+- GitHub Actions for lint, static analysis, and tests across PHP 8.4 and 8.5, Laravel 12 and 13, lowest and newest dependencies, on Linux and Windows
 - an Orchestra Testbench workbench (`composer serve`) and a Laravel Boost skill for apps that install the package
 
 ## Getting Started
@@ -53,7 +52,7 @@ A template for Laravel 12 and 13 packages on PHP 8.4 or newer. It comes with:
     php configure.php --no-interaction --vendor=acme --package=laravel-example --author-name="Jane Doe" --author-email=jane@example.com
     ```
 
-3. GitHub does not copy repository settings from a template. Add a ruleset for `main` that requires a pull request before merging and the status checks `lint`, `static`, `security` and `tests`, so a failing check blocks the merge. Set the number of required approvals to fit your team.
+3. GitHub does not copy repository settings from a template. Add a ruleset for `main` that requires a pull request before merging and the status checks `lint`, `static` and `tests`, so a failing check blocks the merge. Set the number of required approvals to fit your team. Turn on Dependabot alerts and security updates as well, so GitHub reports new advisories for your dependencies and opens a fix pull request.
 
 Everything below is the README of your package. The configure script removes everything above this line and activates the package header.
 
@@ -130,7 +129,7 @@ use VendorName\PackageName\Facades\PackageName;
 - `composer test:types`: PHPStan at `level: max` over the package, tests and workbench.
 - `composer test:type-coverage`: fails under 100% type coverage (Pest).
 - `composer test:unit`: Pest in parallel under an exact 100% line-coverage gate.
-- `composer test`: the full gate, in order: `composer.json` validation, audit, lint, type coverage, static analysis, tests.
+- `composer test`: the full gate, in order: `composer.json` validation, lint, type coverage, static analysis, tests.
 
 ## Changelog
 

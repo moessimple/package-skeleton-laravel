@@ -31,7 +31,7 @@ This repository is a Laravel package. Keep the package focused, idiomatic, and e
 
 ## Quick Commands
 
-- Full validation: `composer test` (composer.json validation, audit, lint, type coverage, static analysis, tests)
+- Full validation: `composer test` (composer.json validation, lint, type coverage, static analysis, tests)
 - Apply Rector and Pint fixes: `composer lint`
 - Lint check: `composer test:lint`
 - Static analysis (PHPStan max): `composer test:types`

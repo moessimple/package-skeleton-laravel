@@ -22,7 +22,7 @@ For significant changes, please open an issue first so we can discuss the approa
 
 ## Setup
 
-You need PHP 8.4 or newer, Composer 2.11 or newer (required to enforce the dependency cooldown), and Xdebug or PCOV for line coverage.
+You need PHP 8.4 or newer, Composer 2.11 or newer, and Xdebug or PCOV for line coverage.
 The Composer minimum is enforced in `require-dev`, so applications using the package do not inherit it.
 
 Clone your fork, then install the dev dependencies:
@@ -33,15 +33,10 @@ composer install
 
 ## Dependency updates
 
-Composer waits three days before accepting new releases. Dependabot version
-updates cover only GitHub Actions and apply the same cooldown. Dependabot security
-updates bypass that wait, but Composer still enforces its own cooldown. Review
-critical security fixes against the maintainer advisory, then use
-`composer update --no-cooldown vendor/package` to install a reviewed fix immediately.
-Review the complete dependency diff: the flag applies to the whole command, including
-newly resolved dependencies. Advisory and malware blocking remain active.
-This Composer policy applies only when
-working on the package itself; consuming applications use their own policies.
+Composer skips versions with a known vulnerability or flagged as malware and lists
+advisories after `composer update` and `composer require`. Run `composer test:audit` to
+check on demand. Dependabot version updates cover only GitHub Actions and wait three days
+before proposing a new release.
 
 ## Lint
 
