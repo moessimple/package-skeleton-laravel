@@ -103,6 +103,8 @@ function copyDependencies(string $package): void
         RecursiveIteratorIterator::SELF_FIRST,
     );
 
+    File::ensureDirectoryExists("{$package}/vendor");
+
     /** @var SplFileInfo $item */
     foreach ($iterator as $item) {
         $target = "{$package}/vendor/".mb_substr($item->getPathname(), mb_strlen($vendor) + 1);

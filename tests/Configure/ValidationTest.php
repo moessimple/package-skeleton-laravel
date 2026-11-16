@@ -38,7 +38,7 @@ it('rejects an invalid value with its reason and changes nothing', function (str
     'a lowercase reserved type name as class name' => ['--class-name=string', 'Main class name: Class name must not be a reserved PHP type name.'],
 ]);
 
-it('rejects empty, blank, control-character and invalid UTF-8 values for every field', function (string $option, string $label): void {
+it('rejects empty, blank and control-character values for every field', function (string $option, string $label): void {
     $result = configurePackage($this->package, ['--no-interaction', $option]);
 
     expect($result->exitCode())->toBe(1, $result->output())
@@ -54,7 +54,18 @@ it('rejects empty, blank, control-character and invalid UTF-8 values for every f
     'a package name with a tab' => ["--package-name=acme/shop\ttools", 'Package name'],
     'an empty display name' => ['--package-name-human=', 'Package display name'],
     'a display name with a newline' => ["--package-name-human=Shop\nTools", 'Package display name'],
-    'a description with invalid UTF-8' => ["--package-description=Shop \xFF Tools", 'Package description'],
     'an empty vendor namespace' => ['--vendor-namespace=', 'Vendor namespace'],
     'a blank class name' => ['--class-name= ', 'Main class name'],
 ]);
+
+// Windows passes arguments to a process as UTF-16 and converts invalid UTF-8 bytes through the ANSI code
+// page on the way, so they arrive as valid characters and cannot reach configure.php there.
+it('rejects a value with invalid UTF-8', function (): void {
+    $result = configurePackage($this->package, ['--no-interaction', "--package-description=Shop \xFF Tools"]);
+
+    expect($result->exitCode())->toBe(1, $result->output())
+        ->and(configureResult($result->output()))
+        ->toHaveKey('success', false)
+        ->toHaveKey('errors', ['Package description: Enter a non-empty UTF-8 value without control characters.'])
+        ->and(directoryContents($this->package))->toBe($this->original);
+})->skipOnWindows();
