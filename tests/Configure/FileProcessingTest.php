@@ -55,6 +55,7 @@ it('leaves binary files, Composer files and skipped directories untouched', func
     File::put("{$this->package}/vendor/acme/PackageName.php", 'PackageName vendor-name');
     File::ensureDirectoryExists("{$this->package}/node_modules/acme");
     File::put("{$this->package}/node_modules/acme/index.js", 'PackageName vendor-name');
+    File::ensureDirectoryExists("{$this->package}/resources/js");
     File::ensureDirectoryExists("{$this->package}/build/cache");
     File::put("{$this->package}/build/cache/PackageName.txt", 'PackageName vendor-name');
     $composer = File::json("{$this->package}/composer.json");
@@ -69,6 +70,7 @@ it('leaves binary files, Composer files and skipped directories untouched', func
         ->and(File::get("{$this->package}/vendor/acme/PackageName.php"))->toBe('PackageName vendor-name')
         ->and(File::get("{$this->package}/node_modules/acme/index.js"))->toBe('PackageName vendor-name')
         ->and(File::get("{$this->package}/build/cache/PackageName.txt"))->toBe('PackageName vendor-name')
+        ->and("{$this->package}/resources/js")->toBeDirectory()
         ->and(File::json("{$this->package}/composer.json"))->toHaveKey('support.issues', 'https://github.com/vendor-name/laravel-package-name/issues');
 });
 
@@ -111,5 +113,23 @@ it('completes when optional files are already missing', function (): void {
 
     expect($result->exitCode())->toBe(0)
         ->and(configureResult($result->output()))->toHaveKey('success', true)
+        ->and("{$this->package}/configure.php")->not->toBeFile();
+});
+
+it('completes without the package templates and the example test', function (): void {
+    File::delete([
+        "{$this->package}/README.md",
+        "{$this->package}/README_PACKAGE.md",
+        "{$this->package}/AGENTS.md",
+        "{$this->package}/AGENTS_PACKAGE.md",
+        "{$this->package}/tests/Feature/ExampleTest.php",
+    ]);
+
+    $result = configurePackage($this->package, ['--no-interaction', '--routes']);
+
+    expect($result->exitCode())->toBe(0)
+        ->and("{$this->package}/README.md")->not->toBeFile()
+        ->and("{$this->package}/AGENTS.md")->not->toBeFile()
+        ->and("{$this->package}/CLAUDE.md")->not->toBeFile()
         ->and("{$this->package}/configure.php")->not->toBeFile();
 });

@@ -121,6 +121,15 @@ it('takes the vendor from the signed-in GitHub user', function (): void {
         ->toHaveKey('author_name', 'Jane Doe');
 });
 
+it('takes the vendor from the git identity when the GitHub user cannot be read', function (): void {
+    $package = copySkeleton("{$this->sandbox}/laravel-example");
+
+    $result = configurePackage($package, ['--no-interaction'], env: ['GH_USER' => 'janedoe', 'GH_API_FAILS' => '1', 'GIT_USER_NAME' => 'Jane Doe']);
+
+    expect($result->exitCode())->toBe(0)
+        ->and(configureResult($result->output())['summary']['metadata'])->toHaveKey('package_name', 'jane-doe/laravel-example');
+});
+
 it('names the package after its directory', function (string $directory, string $packageName): void {
     $package = copySkeleton("{$this->sandbox}/{$directory}");
 

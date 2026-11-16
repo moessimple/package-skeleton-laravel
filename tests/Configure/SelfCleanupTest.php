@@ -50,3 +50,16 @@ it('removes the configure tests even when a later step fails', function (): void
         ->and("{$this->package}/configure.php")->toBeFile()
         ->and("{$this->package}/tests/Configure")->not->toBeDirectory();
 });
+
+it('completes a second run after a failed step', function (): void {
+    configurePackage($this->package, ['--no-interaction', '--package-name=acme/laravel-shop-tools'], env: ['COMPOSER_LINT_FAILS' => '1']);
+
+    $result = configurePackage($this->package, ['--no-interaction', '--package-name=acme/laravel-shop-tools']);
+
+    expect($result->exitCode())->toBe(0)
+        ->and(configureResult($result->output()))->toHaveKey('success', true)
+        ->and("{$this->package}/configure.php")->not->toBeFile()
+        ->and("{$this->package}/src/ShopToolsServiceProvider.php")->toBeFile()
+        ->and(File::get("{$this->package}/CLAUDE.md"))->toBe(File::get("{$this->package}/AGENTS.md"))
+        ->and(File::json("{$this->package}/composer.json"))->toHaveKey('name', 'acme/laravel-shop-tools');
+});
