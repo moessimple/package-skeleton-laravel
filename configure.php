@@ -1410,8 +1410,14 @@ class LaravelPackageSkeletonConfigurator
         /** @var array{require-dev: array<string, string>} $composer */
         $composer = json_decode((string) file_get_contents($this->rootDir.'/composer.json'), true, flags: JSON_THROW_ON_ERROR);
 
-        if (array_intersect(['laravel/agent-detector', 'laravel/chisel', 'laravel/prompts'], array_keys($composer['require-dev'])) !== []) {
-            throw new RuntimeException('Could not remove configuration dependencies: '.$result['output']);
+        $remaining = array_intersect(['laravel/agent-detector', 'laravel/chisel', 'laravel/prompts'], array_keys($composer['require-dev']));
+
+        if ($remaining !== []) {
+            throw new RuntimeException(mb_rtrim(sprintf(
+                'Could not remove configuration dependencies: %s are still in require-dev. %s',
+                implode(', ', $remaining),
+                $result['output'],
+            )));
         }
 
         $this->trackModified('composer.lock');

@@ -32,7 +32,7 @@ it('reports a failed dependency removal with its output and keeps configure.php'
     expect($result->exitCode())->toBe(1)
         ->and(configureResult($result->output()))
         ->toHaveKey('success', false)
-        ->toHaveKey('errors', ['Could not remove configuration dependencies: Could not resolve the dependencies.'])
+        ->toHaveKey('errors', ['Could not remove configuration dependencies: laravel/agent-detector, laravel/chisel, laravel/prompts are still in require-dev. Could not resolve the dependencies.'])
         ->and(stubCalls($this->sandbox))->not->toContain('composer dump-autoload --quiet')
         ->and("{$this->package}/configure.php")->toBeFile();
 });
@@ -43,7 +43,7 @@ it('reports a dependency removal that leaves the packages in composer.json', fun
     expect($result->exitCode())->toBe(1)
         ->and(configureResult($result->output()))
         ->toHaveKey('success', false)
-        ->toHaveKey('errors', ['Could not remove configuration dependencies: '])
+        ->toHaveKey('errors', ['Could not remove configuration dependencies: laravel/agent-detector, laravel/chisel, laravel/prompts are still in require-dev.'])
         ->and(stubCalls($this->sandbox))->not->toContain('composer dump-autoload --quiet')
         ->and("{$this->package}/configure.php")->toBeFile();
 });
