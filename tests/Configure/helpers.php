@@ -6,6 +6,7 @@ use Illuminate\Contracts\Process\ProcessResult;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Str;
+use Symfony\Component\Process\Process as SymfonyProcess;
 
 /**
  * The skeleton checkout these tests belong to. Tests read from it but never write to it.
@@ -17,7 +18,8 @@ function skeletonPath(): string
 
 /**
  * Creates an empty directory under the system temp directory with bin/, home/ and tmp/ for one test.
- * Each test removes its sandbox in afterEach, so parallel workers and failed tests leave nothing behind.
+ * bin/ holds the git and gh stubs, so configure.php never reaches the real tools. Each test removes its
+ * sandbox in afterEach, so parallel workers and failed tests leave nothing behind.
  */
 function createSandbox(): string
 {
@@ -29,7 +31,29 @@ function createSandbox(): string
 
     File::put("{$sandbox}/gitconfig", '');
 
+    installStub($sandbox, 'git');
+    installStub($sandbox, 'gh');
+
     return $sandbox;
+}
+
+/**
+ * Puts a launcher for tests/Configure/stubs/{$name}.php into the sandbox bin/ directory, so that a
+ * process finds the stub as $name on its PATH. The launcher is a POSIX shell script on Unix and a batch
+ * file on Windows, both calling the PHP binary running the tests.
+ */
+function installStub(string $sandbox, string $name): void
+{
+    $stub = __DIR__."/stubs/{$name}.php";
+
+    if (PHP_OS_FAMILY === 'Windows') {
+        File::put("{$sandbox}/bin/{$name}.cmd", '@"'.PHP_BINARY.'" "'.$stub.'" %*'.PHP_EOL);
+
+        return;
+    }
+
+    File::put("{$sandbox}/bin/{$name}", '#!/bin/sh'.PHP_EOL.'exec '.escapeshellarg(PHP_BINARY).' '.escapeshellarg($stub).' "$@"'.PHP_EOL);
+    File::chmod("{$sandbox}/bin/{$name}", 0755);
 }
 
 /**
@@ -83,17 +107,43 @@ function configurePackage(string $package, array $arguments = [], array $env = [
 }
 
 /**
+ * Prepares configure.php in $package as a process attached to a pseudo terminal, so that standard
+ * input is a TTY as in an author's shell. The caller starts it. The Process facade cannot allocate a
+ * pseudo terminal, and Windows has none, so tests using this skip Windows. The environment matches
+ * configurePackage().
+ *
+ * @param  list<string>  $arguments
+ * @param  array<string, string>  $env
+ */
+function configureProcessInTerminal(string $package, array $arguments = [], array $env = [], bool $withDependencies = true): SymfonyProcess
+{
+    $autoloader = $withDependencies
+        ? ['-d', 'auto_prepend_file='.skeletonPath().'/vendor/autoload.php']
+        : [];
+
+    $process = new SymfonyProcess(
+        [PHP_BINARY, ...$autoloader, 'configure.php', ...$arguments],
+        $package,
+        isolatedEnvironment(dirname($package), $env),
+        timeout: 30,
+    );
+
+    return $process->setPty(true);
+}
+
+/**
  * The environment for a configure.php process: an allowlist of variables, everything else inherited
  * from the test process removed. Symfony Process merges the parent environment into the child unless a
- * variable is set to false.
+ * variable is set to false. COMPOSER_BINARY points configure.php to the Composer stub, and every stub
+ * appends its calls to the sandbox call log.
  *
  * @param  array<string, string>  $env
- * @return array<array-key, string|false>
+ * @return array<string, string|false>
  */
 function isolatedEnvironment(string $sandbox, array $env = []): array
 {
     $inherited = array_fill_keys(
-        array_keys([...getenv(), ...$_ENV]),
+        [...array_keys(getenv()), ...array_filter(array_keys($_ENV), is_string(...))],
         false,
     );
 
@@ -106,6 +156,8 @@ function isolatedEnvironment(string $sandbox, array $env = []): array
         'TMPDIR' => "{$sandbox}/tmp",
         'GIT_CONFIG_GLOBAL' => "{$sandbox}/gitconfig",
         'GIT_CONFIG_NOSYSTEM' => '1',
+        'COMPOSER_BINARY' => __DIR__.'/stubs/composer.php',
+        'CONFIGURE_TEST_CALLS' => "{$sandbox}/calls.log",
     ];
 
     if (PHP_OS_FAMILY === 'Windows') {
@@ -137,4 +189,31 @@ function directoryContents(string $directory): array
     ksort($contents);
 
     return $contents;
+}
+
+/**
+ * The calls the stubbed tools received, one line per call in the order they happened.
+ *
+ * @return list<string>
+ */
+function stubCalls(string $sandbox): array
+{
+    if (! File::exists("{$sandbox}/calls.log")) {
+        return [];
+    }
+
+    return array_values(array_filter(explode(PHP_EOL, File::get("{$sandbox}/calls.log"))));
+}
+
+/**
+ * Decodes the single JSON line configure.php prints in non-interactive mode.
+ *
+ * @return array{success: bool, errors: list<string>, summary: array{metadata: array<string, string>, selected_features: list<string>, selected_tools: list<string>, removed_paths: list<string>, modified_files: list<string>, manual_steps: list<string>}}
+ */
+function configureResult(string $output): array
+{
+    /** @var array{success: bool, errors: list<string>, summary: array{metadata: array<string, string>, selected_features: list<string>, selected_tools: list<string>, removed_paths: list<string>, modified_files: list<string>, manual_steps: list<string>}} $result */
+    $result = json_decode($output, true, flags: JSON_THROW_ON_ERROR);
+
+    return $result;
 }
