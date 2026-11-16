@@ -1045,6 +1045,7 @@ class LaravelPackageSkeletonConfigurator
                 ->onRemove(function () use ($readme): void {
                     $this->removePath('.github/dependabot.yml');
                     $this->removeLinesContaining($readme, ['Dependabot']);
+                    $this->removeLinesContaining($this->rootDir.'/.github/CONTRIBUTING.md', ['Dependabot']);
                 }),
         );
 
@@ -1183,19 +1184,13 @@ class LaravelPackageSkeletonConfigurator
                 continue;
             }
 
-            $originalContents = $contents;
-
-            if (str_contains($file, 'resources/boost/skills/')) {
-                $contents = str_replace('author: Author Name', 'author: '.json_encode($this->metadata->authorName(), JSON_THROW_ON_ERROR), $contents);
-            }
-
             $updated = preg_replace_callback(
                 $placeholderPattern,
                 fn (array $matches): string => $replacements[(string) $matches[0]],
                 $contents,
             ) ?? $contents;
 
-            $this->replaceFileContents($file, $originalContents, $updated);
+            $this->replaceFileContents($file, $contents, $updated);
         }
     }
 
@@ -1213,16 +1208,24 @@ class LaravelPackageSkeletonConfigurator
         $shortName = (new Spatie\LaravelPackageTools\Package)->name($packageSlug)->shortName();
 
         return [
+            'author: :author_name' => 'author: '.json_encode($this->metadata->authorName(), JSON_THROW_ON_ERROR),
+            ':author_name' => $this->metadata->authorName(),
+            ':author_email' => $this->metadata->authorEmail(),
+            ':author_username' => $vendorSlug,
+            ':vendor_name' => $this->headline($vendorSlug),
+            ':vendor_slug' => $vendorSlug,
+            ':vendor_namespace' => $vendorNamespace,
+            ':package_name' => $packageName,
+            ':package_slug' => $packageSlug,
+            ':package_short_name' => $shortName,
+            ':package_description' => $this->metadata->packageDescription(),
+            ':class_name' => $className,
             'VendorName\\PackageName' => $vendorNamespace.'\\'.$className,
             'PackageName' => $className,
             'vendor-name' => $vendorSlug,
             'laravel-package-name' => $packageSlug,
             'package-name' => $shortName,
             'package_name' => str_replace('-', '_', $shortName),
-            'Package Name' => $packageName,
-            'Package Description' => $this->metadata->packageDescription(),
-            'Author Name' => $this->metadata->authorName(),
-            'author@example.com' => $this->metadata->authorEmail(),
         ];
     }
 
@@ -1295,8 +1298,8 @@ class LaravelPackageSkeletonConfigurator
         $tableName = str_replace('-', '_', $shortName).'_placeholder';
 
         $toRename = [
-            'src/PackageName.php' => "src/{$className}.php",
             'src/PackageNameServiceProvider.php' => "src/{$className}ServiceProvider.php",
+            'src/PackageName.php' => "src/{$className}.php",
             'src/Facades/PackageName.php' => "src/Facades/{$className}.php",
             'src/Console/Commands/PackageNameCommand.php' => "src/Console/Commands/{$className}Command.php",
             'config/package-name.php' => "config/{$shortName}.php",

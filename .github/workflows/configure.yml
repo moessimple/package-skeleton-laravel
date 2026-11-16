@@ -61,6 +61,6 @@ jobs:
       # --untracked includes the files configure.php renamed.
       - name: Check that no placeholder is left
         run: |
-          if git grep --untracked -nIE 'vendor-name|VendorName|PackageName|package-name|package_name|Package Name|Author Name|author@example\.com|moessimple'; then
+          if git grep --untracked -nIE ':(author_name|author_email|author_username|vendor_name|vendor_slug|vendor_namespace|package_name|package_slug|package_short_name|package_description|class_name)|vendor-name|VendorName|PackageName|package-name|package_name|Package Name|Author Name|author@example\.com|moessimple'; then
             exit 1
           fi

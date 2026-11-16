@@ -5,11 +5,12 @@ This repository is a Laravel package skeleton for building new packages. Preserv
 ## Package Conventions
 
 - Wire package resources through `spatie/laravel-package-tools` in `configurePackage()`. Config, view and translation namespaces and publish tags use the package short name. Translations live in `resources/lang` and assets in `resources/dist`.
-- Keep `Author Name`, `Package Name`, `vendor-name`, and `package-name` placeholders intact until the package is configured.
+- Keep named placeholders such as `:author_name`, `:package_name`, `:vendor_slug`, `:package_slug`, and `:package_short_name` intact in templates until configuration. Keep `VendorName`, `PackageName`, `vendor-name`, and `package-name` in the runnable starter code and Composer metadata until the configure flow replaces them.
 - Treat `configure.php` as a one-time bootstrap script: package authors run `composer install` to start configuration automatically, or `composer install --no-scripts` followed by `php configure.php` to run it manually, replacing placeholders, pruning disabled features/tools, optionally creating a GitHub repository, and deleting the script after success.
 - When changing package capabilities or maintenance tooling in the skeleton, keep the configure feature/tool mappings, opt-in non-interactive feature and tool flags, files, Composer metadata, `README_PACKAGE.md`, `AGENTS_PACKAGE.md`, AI guidance, `AGENTS.md` as the skeleton guidance source, `AGENTS_PACKAGE.md` as the package guidance source, and `.agents/skills` as the canonical local skills source in sync. `configure.php` generates package `README.md` and `AGENTS.md`, then links `CLAUDE.md` to `AGENTS.md` and `.claude` to `.agents`.
 - Do not add runtime dependencies, generated files, or extra scaffold unless the package feature needs them.
 - Keep temporary scaffold verification out of the shipped package test suite.
+- Keep generated documentation aligned with the selected features and tools. Provider code is removed through Chisel markers; README sections are removed through the headings registered in `configure.php`. When adding feature-dependent text or changing a heading, update its removal rule and verify the generated README with that feature enabled and disabled. Keep package guidance in `AGENTS_PACKAGE.md` consistent with the same selection.
 - Never lower the quality bar: no PHPStan baseline, `ignoreErrors`, `@codeCoverageIgnore`, or lowered coverage thresholds.
 - Treat the repository as public. Never write secrets, credentials, personal data or internal details into code, tests, documentation or GitHub text.
 

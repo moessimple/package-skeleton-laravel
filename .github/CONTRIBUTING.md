@@ -1,6 +1,6 @@
 # Contribution Guide
 
-Thank you for considering contributing to Package Name! Please review the following guidelines before submitting a pull request.
+Thank you for considering contributing to :package_name! Please review the following guidelines before submitting a pull request.
 
 For significant changes, please open an issue first so we can discuss the approach.
 
@@ -35,8 +35,9 @@ composer install
 
 Composer skips versions with a known vulnerability or flagged as malware and lists
 advisories after `composer update` and `composer require`. Run `composer test:audit` to
-check on demand. Dependabot version updates cover only GitHub Actions and wait three days
-before proposing a new release.
+check on demand.
+
+Dependabot version updates cover only GitHub Actions and wait three days before proposing a new release.
 
 ## Lint
 

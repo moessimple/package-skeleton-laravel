@@ -1,54 +1,52 @@
 <div align="center">
-    <h1>Package Name</h1>
+    <h1>:package_name</h1>
 </div>
 
 <p align="center">
-    <a href="https://packagist.org/packages/vendor-name/laravel-package-name"><img src="https://img.shields.io/packagist/v/vendor-name/laravel-package-name.svg?style=flat-square" alt="Packagist"></a>
-    <a href="https://packagist.org/packages/vendor-name/laravel-package-name"><img src="https://img.shields.io/packagist/php-v/vendor-name/laravel-package-name.svg?style=flat-square" alt="PHP from Packagist"></a>
-    <a href="https://packagist.org/packages/vendor-name/laravel-package-name"><img src="https://badge.laravel.cloud/badge/vendor-name/laravel-package-name?style=flat" alt="Laravel versions"></a>
-    <a href="https://github.com/vendor-name/laravel-package-name/actions"><img alt="GitHub Workflow Status (main)" src="https://img.shields.io/github/actions/workflow/status/vendor-name/laravel-package-name/tests.yml?branch=main&label=Tests&style=flat-square"></a>
-    <a href="https://packagist.org/packages/vendor-name/laravel-package-name"><img src="https://img.shields.io/packagist/dt/vendor-name/laravel-package-name.svg?style=flat-square" alt="Total Downloads"></a>
+    <a href="https://github.com/:vendor_slug/:package_slug/actions/workflows/tests.yml"><img src="https://github.com/:vendor_slug/:package_slug/actions/workflows/tests.yml/badge.svg?branch=main" alt="Tests"></a>
+    <a href="https://github.com/:vendor_slug/:package_slug/actions/workflows/static.yml"><img src="https://github.com/:vendor_slug/:package_slug/actions/workflows/static.yml/badge.svg?branch=main" alt="Static analysis"></a>
+    <a href="https://github.com/:vendor_slug/:package_slug/actions/workflows/lint.yml"><img src="https://github.com/:vendor_slug/:package_slug/actions/workflows/lint.yml/badge.svg?branch=main" alt="Lint"></a>
 </p>
 
-Package Description
+:package_description
 
 ## Installation
 
 You can install the package via Composer:
 
 ```bash
-composer require vendor-name/laravel-package-name
+composer require :vendor_slug/:package_slug
 ```
 
 ### Publishing the Configuration File
 
 ```bash
-php artisan vendor:publish --tag="package-name-config"
+php artisan vendor:publish --tag=":package_short_name-config"
 ```
 
 ### Publishing and Running the Migrations
 
 ```bash
-php artisan vendor:publish --tag="package-name-migrations"
+php artisan vendor:publish --tag=":package_short_name-migrations"
 php artisan migrate
 ```
 
 ### Publishing the Views
 
 ```bash
-php artisan vendor:publish --tag="package-name-views"
+php artisan vendor:publish --tag=":package_short_name-views"
 ```
 
 ### Publishing the Translations
 
 ```bash
-php artisan vendor:publish --tag="package-name-translations"
+php artisan vendor:publish --tag=":package_short_name-translations"
 ```
 
 ### Publishing the Public Assets
 
 ```bash
-php artisan vendor:publish --tag="package-name-assets"
+php artisan vendor:publish --tag=":package_short_name-assets"
 ```
 
 ## Usage
@@ -81,11 +79,11 @@ php artisan vendor:publish --tag="package-name-assets"
 
 ## Changelog
 
-Please see the [releases](https://github.com/vendor-name/laravel-package-name/releases) for what has changed in each version.
+Please see the [releases](https://github.com/:vendor_slug/:package_slug/releases) for what has changed in each version.
 
 ## Contributing
 
-Thank you for considering contributing to Package Name! Please review our [contributing guide](.github/CONTRIBUTING.md) to get started.
+Thank you for considering contributing to :package_name! Please review our [contributing guide](.github/CONTRIBUTING.md) to get started.
 
 ## Security Vulnerabilities
 
@@ -93,9 +91,9 @@ Please review [our security policy](.github/SECURITY.md) on how to report securi
 
 ## Credits
 
-- [Author Name](https://github.com/vendor-name)
+- [:author_name](https://github.com/:author_username)
 - [All Contributors](../../contributors)
 
 ## License
 
-Package Name is open-sourced software licensed under the [MIT license](LICENSE.md).
+:package_name is open-sourced software licensed under the [MIT license](LICENSE.md).

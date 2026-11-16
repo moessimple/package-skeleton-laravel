@@ -24,7 +24,7 @@ Add package features in the right place and wire them through the service provid
 1. Declare package resources in `configurePackage()` with the `Package` methods: `hasConfigFile()`, `hasViews()`, `hasTranslations()`, `hasAssets()`, `hasRoute()`, `hasMigration()`, `hasConsoleCommand()`, `hasInstallCommand()`.
 2. Put container bindings in `packageRegistered()` and boot-time logic the `Package` methods do not cover in `packageBooted()`.
 3. Register Artisan commands with `hasConsoleCommand()`, which only registers them in the console. `hasCommand()` also registers them for `Artisan::call()` from web requests; use it only when that is intended.
-4. Let laravel-package-tools name the publish tags (`package-name-config`, `-views`, `-translations`, `-assets`, `-migrations`) from the package short name, which is the name after `laravel-`.
+4. Let laravel-package-tools name the publish tags (`:package_short_name-config`, `-views`, `-translations`, `-assets`, `-migrations`) from the package short name, which is the name after `laravel-`.
 5. Add tests for the observable provider behavior: merged config, loaded routes, publish tags, or command registration.
 
 Provider wiring anti-patterns:
