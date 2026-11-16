@@ -81,6 +81,44 @@ function copySkeleton(string $destination): string
 }
 
 /**
+ * Gives $package its own physical copy of the skeleton's vendor/ directory and composer.lock, for the
+ * test that runs the real Composer. composer.lock is not committed; without one, configure.php's
+ * `composer remove` resolves and writes it. Symbolic links are left out: Testbench links its Laravel skeleton
+ * back to the skeleton's vendor/ directory, and following that link would loop and let the run write
+ * into the skeleton. Testbench creates the link again inside the copy when it needs it.
+ */
+function copyDependencies(string $package): void
+{
+    $vendor = skeletonPath().'/vendor';
+    $iterator = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($vendor, FilesystemIterator::SKIP_DOTS),
+        RecursiveIteratorIterator::SELF_FIRST,
+    );
+
+    /** @var SplFileInfo $item */
+    foreach ($iterator as $item) {
+        $target = "{$package}/vendor/".mb_substr($item->getPathname(), mb_strlen($vendor) + 1);
+
+        if ($item->isLink()) {
+            continue;
+        }
+
+        if ($item->isDir()) {
+            File::ensureDirectoryExists($target);
+
+            continue;
+        }
+
+        File::copy($item->getPathname(), $target);
+        File::chmod($target, $item->getPerms() & 0777);
+    }
+
+    if (File::exists(skeletonPath().'/composer.lock')) {
+        File::copy(skeletonPath().'/composer.lock', "{$package}/composer.lock");
+    }
+}
+
+/**
  * Runs configure.php in $package as a separate process, the way a package author runs it.
  *
  * $package must be a copy created by copySkeleton() directly inside a sandbox. The process only sees
@@ -95,7 +133,7 @@ function copySkeleton(string $destination): string
  * @param  list<string>  $arguments
  * @param  array<string, string|false>  $env
  */
-function configurePackage(string $package, array $arguments = [], array $env = [], bool $withDependencies = true): ProcessResult
+function configurePackage(string $package, array $arguments = [], array $env = [], bool $withDependencies = true, int $timeout = 60): ProcessResult
 {
     $autoloader = $withDependencies
         ? ['-d', 'auto_prepend_file='.skeletonPath().'/vendor/autoload.php']
@@ -103,6 +141,7 @@ function configurePackage(string $package, array $arguments = [], array $env = [
 
     return Process::path($package)
         ->env(isolatedEnvironment(dirname($package), $env))
+        ->timeout($timeout)
         ->run([PHP_BINARY, ...$autoloader, 'configure.php', ...$arguments]);
 }
 
