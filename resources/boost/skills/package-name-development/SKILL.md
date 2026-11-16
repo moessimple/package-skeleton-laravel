@@ -1,19 +1,19 @@
 ---
-name: package-name-development
+name: :package_short_name-development
 description: >
-  Configure and apply the Package Name package in Laravel applications.
+  Configure and apply the :package_name package in Laravel applications.
 license: MIT
 metadata:
-  author: Author Name
+  author: :author_name
 ---
 
-# Package Name
+# :package_name
 
-Use this skill when a Laravel application needs to integrate the Package Name package.
+Use this skill when a Laravel application needs to integrate the :package_name package.
 
 ## Primary Goal
 
-- apply the `vendor-name/laravel-package-name` package's public API in the smallest correct way
+- apply the `:vendor_slug/:package_slug` package's public API in the smallest correct way
 
 ## Workflow
 
@@ -24,7 +24,7 @@ Use this skill when a Laravel application needs to integrate the Package Name pa
 
 ### 2. Apply the package's public API
 
-Document how to integrate Package Name here, replacing this placeholder with the integration steps for your package.
+Document how to integrate :package_name here, replacing this placeholder with the integration steps for your package.
 
 ## Rules, References, and Templates
 
@@ -34,7 +34,7 @@ Read before executing:
 
 ## Examples
 
-- describe a representative integration scenario for Package Name
+- describe a representative integration scenario for :package_name
 
 ## Anti-patterns
 

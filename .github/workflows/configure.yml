@@ -16,8 +16,7 @@ concurrency:
 
 jobs:
   configure:
-    # Turns the template into a package as a user would. configure.php ends with composer test, so
-    # this fails when the renamed package no longer installs or passes its quality gate.
+    # Turns the template into a package as a user would and checks the generated package.
     # configure.php deletes this workflow, and the condition skips it in repositories created from
     # the template before they run configure.php.
     if: ${{ github.repository == 'moessimple/package-skeleton-laravel' }}
@@ -50,12 +49,18 @@ jobs:
           # composer test:unit measures line coverage.
           coverage: xdebug
 
+      - name: Install dependencies
+        run: composer install --no-interaction --no-scripts --prefer-dist
+
       - name: Configure the template
-        run: php configure.php --no-interaction --vendor=acme --package=laravel-example --author-name="Jane Doe" --author-email=jane@example.com
+        run: php configure.php --no-interaction --package-name=acme/laravel-example --vendor-namespace=Acme --class-name=Example --package-description="An example Laravel package." --author-name="Jane Doe" --author-email=jane@example.com
+
+      - name: Validate the generated package
+        run: composer test
 
       # --untracked includes the files configure.php renamed.
       - name: Check that no placeholder is left
         run: |
-          if git grep --untracked -nIE 'vendor-name|VendorName|PackageName|package-name|package_name|Package Name|Author Name|author@example\.com|moessimple'; then
+          if git grep --untracked -nIE ':(author_name|author_email|author_username|vendor_name|vendor_slug|vendor_namespace|package_name|package_slug|package_short_name|package_description|class_name)|vendor-name|VendorName|PackageName|package-name|package_name|Package Name|Author Name|author@example\.com|moessimple'; then
             exit 1
           fi

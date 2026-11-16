@@ -25,13 +25,17 @@
         "composer-plugin-api": ">=2.11.0",
         "driftingly/rector-laravel": "^2.7",
         "larastan/larastan": "^3.9",
+        "laravel/agent-detector": "^2.0",
+        "laravel/chisel": "^0.1",
         "laravel/pao": "^1.0",
         "laravel/pint": "^1.29",
+        "laravel/prompts": "^0.3",
         "orchestra/testbench": "^10.0||^11.0",
         "pestphp/pest": "^4.6||^5.0",
         "pestphp/pest-plugin-laravel": "^4.1||^5.0",
         "pestphp/pest-plugin-phpstan": "^5.3",
         "pestphp/pest-plugin-type-coverage": "^4.0||^5.0",
+        "phpstan/phpstan": "<2.3.6",
         "rector/rector": "^2.8"
     },
     "autoload": {
@@ -48,6 +52,12 @@
         }
     },
     "scripts": {
+        "post-install-cmd": [
+            "@php configure.php"
+        ],
+        "post-update-cmd": [
+            "@php configure.php"
+        ],
         "post-autoload-dump": [
             "@clear",
             "@prepare"

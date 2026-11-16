@@ -1,23 +1,23 @@
-# Package Name
+# :package_name
 
 This repository is a Laravel package. Keep the package focused, idiomatic, and easy for Laravel developers to install, test, and maintain.
 
 ## Package Conventions
 
-- Wire the package through `spatie/laravel-package-tools` in the service provider's `configurePackage()` and follow its conventions: config, views, translations, and publish tags use the package short name (`package-name`), translations live in `resources/lang`, assets in `resources/dist`.
-- Keep package names, namespaces, Composer metadata, publish tags, documentation, and examples aligned with `vendor-name/laravel-package-name`.
+- Wire package resources through `spatie/laravel-package-tools` in `configurePackage()`. Config, view and translation namespaces and publish tags use the package short name. Translations live in `resources/lang` and assets in `resources/dist`.
+- Keep package names, namespaces, Composer metadata, publish tags, documentation, and examples aligned with `:vendor_slug/:package_slug`.
 - Add only the code, files, and dependencies the behavior needs: no speculative helpers, cache layers, or defensive checks.
-- Prefer explicit package code over helper abstractions unless the extension point is real.
-- Prefer Laravel collections and typed accessors over hand-written array handling and casts: `collect()`, `$response->collect()` and `$response->fluent()->integer('id')` for HTTP responses, `$request->string('name')`, `config()->string('package-name.key')`.
+- Prefer explicit Laravel package code over helper abstractions unless the extension point is real.
+- Prefer Laravel collections and typed accessors over hand-written array handling and casts: `collect()`, `$response->collect()` and `$response->fluent()->integer('id')` for HTTP responses, `$request->string('name')`, `config()->string(':package_short_name.key')`.
 - For large or repeated array shapes, define a `@phpstan-type` on the class that owns the data and reuse it with `@phpstan-import-type` instead of repeating the shape.
-- Treat the repository as public. Never write secrets, credentials, personal data, or internal details into code, comments, tests, commit messages, or pull requests.
 - Keep tests focused on observable package behavior through public APIs, service provider wiring, commands, routes, published resources, and documentation promises.
-- Never lower the quality bar to get green: no PHPStan baseline or `ignoreErrors`, no `@codeCoverageIgnore`, no lowered coverage thresholds.
+- Never lower the quality bar: no PHPStan baseline, `ignoreErrors`, `@codeCoverageIgnore`, or lowered coverage thresholds.
+- Treat the repository as public. Never write secrets, credentials, personal data or internal details into code, tests, documentation or GitHub text.
 
 ## External Services
 
 - Put a network service the package's behavior depends on behind an interface in `src/Contracts`, named after the role it plays, not the vendor: `PaymentGateway`, not `Stripe`. Tests bind a fake of the interface and applications can swap the vendor, so this extension point is real.
-- Name the implementation after vendor and role (`StripePaymentGateway`). Bind it in the service provider with a closure that reads its config with typed accessors (`config()->string('package-name.api_key')`) and passes the values to the constructor. Mark credential parameters with `#[\SensitiveParameter]`.
+- Name the implementation after vendor and role (`StripePaymentGateway`). Bind it in the service provider with a closure that reads its config with typed accessors (`config()->string(':package_short_name.api_key')`) and passes the values to the constructor. Mark credential parameters with `#[\SensitiveParameter]`.
 - The interface speaks the package's language. It returns a small readonly value object or an array described with `@phpstan-type`. Vendor URLs and payloads stay inside the implementation.
 - Only the implementation's own tests fake HTTP with `Http::fake()`. Every other test binds a fake of the interface.
 
@@ -31,12 +31,12 @@ This repository is a Laravel package. Keep the package focused, idiomatic, and e
 
 ## Quick Commands
 
-- Full validation: `composer test` (composer.json validation, lint, type coverage, static analysis, tests)
+- Full validation: `composer test`
 - Apply Rector and Pint fixes: `composer lint`
 - Lint check: `composer test:lint`
 - Static analysis (PHPStan max): `composer test:types`
 - Type coverage (100%): `composer test:type-coverage`
-- Pest with exact 100% line coverage: `composer test:unit`
+- Pest tests (100% line coverage): `composer test:unit`
 - composer.json validation: `composer test:composer`
 - Dependency audit: `composer test:audit`
 - Workbench build: `composer build`
@@ -80,6 +80,6 @@ This repository is a Laravel package. Keep the package focused, idiomatic, and e
 
 - `package-scaffold`: use when adding package capabilities or wiring them through the service provider, including commands, migrations, routes, config, views, translations, assets, middleware, publish tags, workbench files, and console-only behavior.
 - `package-testing`: use when adding or changing package tests with Pest 4/5 and Orchestra Testbench.
-- `package-release`: use when preparing tags, GitHub releases and their release notes, or release automation changes.
+- `package-release`: use when preparing tags, GitHub releases and their generated release notes.
 - `package-compatibility`: use when reviewing code, dependencies, or CI against the PHP and Laravel support matrix.
 - `package-generate-skill`: use when updating the bundled Boost skill from the package implementation, README, and examples.

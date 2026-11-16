@@ -10,7 +10,7 @@ license: MIT
 
 Prepare a safe package release without tagging, pushing, or publishing unless the user explicitly approves that action.
 
-The GitHub releases are the changelog. There is no `CHANGELOG.md`: workflows only have read access (see `CLAUDE.md`), so no workflow can push a changelog commit after a release.
+The GitHub releases are the changelog. There is no `CHANGELOG.md`: workflows only have read access (see `AGENTS.md`), so no workflow can push a changelog commit after a release.
 
 ## Workflow
 

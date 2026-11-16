@@ -1,6 +1,6 @@
 # Contribution Guide
 
-Thank you for considering contributing to Package Name! Please review the following guidelines before submitting a pull request.
+Thank you for considering contributing to :package_name! Please review the following guidelines before submitting a pull request.
 
 For significant changes, please open an issue first so we can discuss the approach.
 
@@ -35,8 +35,14 @@ composer install
 
 Composer skips versions with a known vulnerability or flagged as malware and lists
 advisories after `composer update` and `composer require`. Run `composer test:audit` to
-check on demand. Dependabot version updates cover only GitHub Actions and wait three days
-before proposing a new release.
+check on demand.
+
+Dependabot version updates cover only GitHub Actions and wait three days before proposing a new release.
+
+`composer.json` keeps `phpstan/phpstan` below 2.3.6, because PHPStan 2.3.6 removed
+`AnalyserResult::getCollectedData()`, which `pestphp/pest-plugin-type-coverage` 5.1.0 still calls.
+Remove the constraint once a release of the plugin includes
+[pestphp/pest-plugin-type-coverage#75](https://github.com/pestphp/pest-plugin-type-coverage/pull/75).
 
 ## Lint
 
