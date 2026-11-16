@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Process;
 
 beforeEach(function (): void {
     $this->sandbox = createSandbox();
@@ -12,6 +13,63 @@ beforeEach(function (): void {
 afterEach(function (): void {
     File::deleteDirectory($this->sandbox);
 });
+
+it('rejects interactive configuration on an unsupported platform before changing files', function (): void {
+    $original = directoryContents($this->package);
+    $script = <<<'PHP'
+        require $argv[1].'/vendor/autoload.php';
+        require $argv[1].'/configure.php';
+
+        $package = $argv[2];
+        $_SERVER['argv'] = ['configure.php'];
+        Laravel\Prompts\Prompt::fake(array_fill(0, 9, Laravel\Prompts\Key::ENTER));
+
+        $configurator = new class($package, interactive: true) extends LaravelPackageSkeletonConfigurator
+        {
+            protected function supportsInteractivePrompts(): bool
+            {
+                return false;
+            }
+        };
+
+        exit($configurator->run());
+        PHP;
+
+    $result = Process::path($this->package)
+        ->env(isolatedEnvironment($this->sandbox))
+        ->run([PHP_BINARY, '-r', $script, skeletonPath(), $this->package]);
+
+    expect($result->exitCode())->toBe(1)
+        ->and($result->output())->toBe('')
+        ->and($result->errorOutput())->toContain('Interactive configuration is not supported on native Windows.')
+        ->toContain('WSL')
+        ->toContain('php configure.php --no-interaction --package-name=acme/laravel-example')
+        ->and(directoryContents($this->package))->toBe($original)
+        ->and(stubCalls($this->sandbox))->toBe([]);
+});
+
+it('rejects interactive configuration on native Windows before changing files', function (): void {
+    $original = directoryContents($this->package);
+    $script = <<<'PHP'
+        require $argv[1].'/vendor/autoload.php';
+        require $argv[1].'/configure.php';
+
+        $package = $argv[2];
+        $_SERVER['argv'] = ['configure.php'];
+
+        exit(new LaravelPackageSkeletonConfigurator($package, interactive: true)->run());
+        PHP;
+
+    $result = Process::path($this->package)
+        ->env(isolatedEnvironment($this->sandbox))
+        ->run([PHP_BINARY, '-r', $script, skeletonPath(), $this->package]);
+
+    expect($result->exitCode())->toBe(1)
+        ->and($result->output())->toBe('')
+        ->and($result->errorOutput())->toContain('Interactive configuration is not supported on native Windows.')
+        ->and(directoryContents($this->package))->toBe($original)
+        ->and(stubCalls($this->sandbox))->toBe([]);
+})->skip(PHP_OS_FAMILY !== 'Windows', 'Requires native Windows.');
 
 // Tests that need an interactive standard input run in a pseudo terminal, which Windows does not offer.
 
