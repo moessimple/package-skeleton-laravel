@@ -9,6 +9,7 @@ use Laravel\Prompts\Elements\Element;
 use Symfony\Component\Console\Input\ArgvInput;
 use Symfony\Component\Console\Input\InputDefinition;
 use Symfony\Component\Console\Input\InputOption;
+use Symfony\Component\Process\Process;
 
 use function Laravel\Prompts\callout;
 use function Laravel\Prompts\confirm;
@@ -148,29 +149,14 @@ trait InteractsWithGitHub
      */
     private function runCommand(array $command, ?string $cwd = null): array
     {
-        $cwd ??= $this->rootDir;
-
-        $process = proc_open(
-            $command,
-            [
-                1 => ['pipe', 'w'],
-                2 => ['pipe', 'w'],
-            ],
-            $pipes,
-            $cwd,
-        );
-
-        if (! is_resource($process)) {
-            return ['success' => false, 'output' => 'Unable to start process.'];
-        }
-
-        $output = stream_get_contents($pipes[1]).stream_get_contents($pipes[2]);
-        fclose($pipes[1]);
-        fclose($pipes[2]);
+        // Symfony Process runs the command through cmd.exe on Windows, which resolves batch
+        // wrappers such as composer.bat. proc_open() only finds .exe files there.
+        $process = new Process($command, $cwd ?? $this->rootDir, timeout: null);
+        $process->run();
 
         return [
-            'success' => proc_close($process) === 0,
-            'output' => mb_trim($output),
+            'success' => $process->isSuccessful(),
+            'output' => mb_trim($process->getOutput().$process->getErrorOutput()),
         ];
     }
 }
