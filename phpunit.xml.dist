@@ -13,6 +13,7 @@
     failOnEmptyTestSuite="true"
     beStrictAboutOutputDuringTests="true"
     cacheDirectory=".phpunit.cache"
+    defaultTestSuite="Arch,Feature,Unit"
     backupStaticProperties="false"
 >
     <testsuites>

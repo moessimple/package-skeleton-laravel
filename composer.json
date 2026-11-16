@@ -85,7 +85,7 @@
         "test:types": "phpstan",
         "test:unit": [
             "@putenv XDEBUG_MODE=coverage",
-            "pest --parallel --coverage --exactly=100.0 --exclude-testsuite=Configure"
+            "pest --parallel --coverage --exactly=100.0"
         ],
         "test:configure": [
             "Composer\\Config::disableProcessTimeout",
