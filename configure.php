@@ -647,7 +647,8 @@ class LaravelPackageSkeletonConfigurator
         }
 
         if (! $this->supportsInteractivePrompts()) {
-            fwrite(STDERR, 'Interactive configuration is not supported on native Windows. Use WSL for interactive setup, or run:'.PHP_EOL.
+            fwrite(STDERR, 'Configuration on native Windows requires an explicit non-interactive signal. Use WSL for interactive setup, or run:'.PHP_EOL.
+                'composer install --no-scripts'.PHP_EOL.
                 'php configure.php --no-interaction --package-name=acme/laravel-example --vendor-namespace=Acme --class-name=Example --author-name="Jane Doe" --author-email=jane@example.com'.PHP_EOL);
 
             return self::FAILURE;
@@ -1778,7 +1779,7 @@ class LaravelPackageSkeletonConfigurator
 
         return $this->input()->getOption('no-interaction') ||
             getenv('COMPOSER_NO_INTERACTION') === '1' ||
-            ! $this->stdinIsInteractive() ||
+            ($this->supportsInteractivePrompts() && ! $this->stdinIsInteractive()) ||
             AgentDetector::detect()->isAgent;
     }
 
@@ -1789,7 +1790,7 @@ class LaravelPackageSkeletonConfigurator
     private function hasNonInteractiveSignals(): bool
     {
         return getenv('COMPOSER_NO_INTERACTION') === '1' ||
-            ! $this->stdinIsInteractive() ||
+            ($this->supportsInteractivePrompts() && ! $this->stdinIsInteractive()) ||
             in_array('--no-interaction', is_array($_SERVER['argv'] ?? null) ? $_SERVER['argv'] : [], true) ||
             in_array('-n', is_array($_SERVER['argv'] ?? null) ? $_SERVER['argv'] : [], true);
     }

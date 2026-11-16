@@ -150,6 +150,36 @@ function configurePackage(string $package, array $arguments = [], array $env = [
 }
 
 /**
+ * A runner without terminal input that simulates native Windows prompt support on every OS. It uses
+ * the real mode detection, including Composer's piped-input case, instead of forcing interactive mode.
+ */
+function unsupportedPromptRunner(string $sandbox): string
+{
+    $runner = $sandbox.'/configure-without-prompts.php';
+    File::put($runner, <<<'PHP'
+        <?php
+
+        require $argv[1].'/vendor/autoload.php';
+        require $argv[1].'/configure.php';
+
+        $package = $argv[2];
+        $_SERVER['argv'] = ['configure.php', ...array_slice($argv, 3)];
+
+        $configurator = new class($package) extends LaravelPackageSkeletonConfigurator
+        {
+            protected function supportsInteractivePrompts(): bool
+            {
+                return false;
+            }
+        };
+
+        exit($configurator->run());
+        PHP);
+
+    return $runner;
+}
+
+/**
  * Runs the configurator for $package inside the test process in interactive mode, which a separate
  * process only reaches through a terminal. The test fakes the answers with Prompt::fake() before the
  * call and reads the rendered output through Prompt afterwards.

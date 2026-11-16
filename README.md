@@ -60,9 +60,16 @@ The configuration script supports non-interactive mode for CI or scripted setups
 php configure.php --no-interaction --config --routes
 ```
 
-Non-interactive mode also activates automatically when the `COMPOSER_NO_INTERACTION=1` environment variable is set, when an AI agent is detected, or when standard input is not an interactive terminal.
+Non-interactive mode also activates automatically when the `COMPOSER_NO_INTERACTION=1` environment variable is set or when an AI agent is detected. On macOS, Linux and WSL, it also activates when standard input is not an interactive terminal.
 
-Native Windows does not support the interactive setup. An interactive invocation stops before changing files and shows a command using `--no-interaction` and metadata flags. Install with `composer install --no-scripts`, then run that command with your package details. Use WSL for interactive setup.
+Native Windows requires an explicit non-interactive signal, including when Composer starts the configuration script with piped input. Without one, configuration stops before changing package files. Install dependencies without scripts, then configure with your package details:
+
+```sh
+composer install --no-scripts
+php configure.php --no-interaction --package-name=acme/laravel-example --vendor-namespace=Acme --class-name=Example --author-name="Jane Doe" --author-email=jane@example.com
+```
+
+Use WSL for interactive setup.
 
 Omitting feature flags includes every package feature; passing specific flags includes only those features. Tools work the same way: omitting tool flags such as `--dependabot` or `--security-policy` includes every tool, while passing specific flags includes only those tools.
 
