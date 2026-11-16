@@ -1754,7 +1754,7 @@ class LaravelPackageSkeletonConfigurator
 
         return $this->input()->getOption('no-interaction') ||
             getenv('COMPOSER_NO_INTERACTION') === '1' ||
-            ! $this->stdinIsInteractive() ||
+            ! $this->canPrompt() ||
             AgentDetector::detect()->isAgent;
     }
 
@@ -1765,14 +1765,18 @@ class LaravelPackageSkeletonConfigurator
     private function hasNonInteractiveSignals(): bool
     {
         return getenv('COMPOSER_NO_INTERACTION') === '1' ||
-            ! $this->stdinIsInteractive() ||
+            ! $this->canPrompt() ||
             in_array('--no-interaction', is_array($_SERVER['argv'] ?? null) ? $_SERVER['argv'] : [], true) ||
             in_array('-n', is_array($_SERVER['argv'] ?? null) ? $_SERVER['argv'] : [], true);
     }
 
-    private function stdinIsInteractive(): bool
+    /**
+     * Laravel Prompts needs an interactive terminal and does not support native Windows, where it throws
+     * before the first prompt. WSL reports Linux and keeps the prompts.
+     */
+    private function canPrompt(): bool
     {
-        return defined('STDIN') && stream_isatty(STDIN);
+        return PHP_OS_FAMILY !== 'Windows' && defined('STDIN') && stream_isatty(STDIN);
     }
 
     private function definition(): InputDefinition

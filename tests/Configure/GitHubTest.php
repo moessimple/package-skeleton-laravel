@@ -15,6 +15,8 @@ afterEach(function (): void {
     File::deleteDirectory($this->sandbox);
 });
 
+// configure.php never prompts on native Windows, because Laravel Prompts does not support it.
+
 it('skips the repository creation with a warning when the GitHub CLI is missing', function (): void {
     File::delete(["{$this->sandbox}/bin/gh", "{$this->sandbox}/bin/gh.cmd"]);
     Prompt::fake(array_fill(0, 9, Key::ENTER));
@@ -26,7 +28,7 @@ it('skips the repository creation with a warning when the GitHub CLI is missing'
         ->and("{$this->package}/configure.php")->not->toBeFile();
     Prompt::assertStrippedOutputContains('GitHub CLI was not found. Repository creation will be skipped.');
     Prompt::assertStrippedOutputDoesntContain('Create a GitHub repository now?');
-});
+})->skipOnWindows();
 
 it('skips the repository creation with a warning when the GitHub CLI is not signed in', function (): void {
     Prompt::fake(array_fill(0, 9, Key::ENTER));
@@ -38,7 +40,7 @@ it('skips the repository creation with a warning when the GitHub CLI is not sign
         ->not->toContain('gh repo create vendor-name/laravel-example --private --source=. --remote=origin')
         ->and("{$this->package}/configure.php")->not->toBeFile();
     Prompt::assertStrippedOutputContains('GitHub CLI is not authenticated. Repository creation will be skipped.');
-});
+})->skipOnWindows();
 
 it('creates no repository when the author declines', function (): void {
     Prompt::fake([
@@ -53,7 +55,7 @@ it('creates no repository when the author declines', function (): void {
         ->and(stubCalls($this->sandbox))->each->not->toStartWith('git add')
         ->and("{$this->package}/configure.php")->not->toBeFile();
     Prompt::assertStrippedOutputContains('Create a GitHub repository now?');
-});
+})->skipOnWindows();
 
 it('creates a private repository, initializes git and pushes the initial commit', function (): void {
     Prompt::fake([
@@ -82,7 +84,7 @@ it('creates a private repository, initializes git and pushes the initial commit'
         ->and("{$this->package}/configure.php")->not->toBeFile();
     Prompt::assertStrippedOutputContains('https://github.com/acme/laravel-shop-tools');
     Prompt::assertStrippedOutputContains('Package configured successfully');
-});
+})->skipOnWindows();
 
 it('creates a public repository in an existing git repository without initializing it again', function (): void {
     Prompt::fake([
@@ -96,7 +98,7 @@ it('creates a public repository in an existing git repository without initializi
     expect($exitCode)->toBe(0)
         ->and(stubCalls($this->sandbox))->toContain('gh repo create acme/laravel-shop-tools --public --source=. --remote=origin', 'git push -u origin main')
         ->not->toContain('git init');
-});
+})->skipOnWindows();
 
 it('commits the package without configure.php and the configure tests', function (): void {
     Prompt::fake([
@@ -111,7 +113,7 @@ it('commits the package without configure.php and the configure tests', function
         ->and(stagedFiles($this->sandbox))->toContain('composer.json', 'src/ExampleServiceProvider.php')
         ->not->toContain('configure.php')
         ->each->not->toStartWith('tests/Configure/');
-});
+})->skipOnWindows();
 
 it('reports a failed git initialization or repository creation and keeps configure.php', function (string $variable, string $value, string $error): void {
     Prompt::fake([
@@ -130,7 +132,7 @@ it('reports a failed git initialization or repository creation and keeps configu
 })->with([
     'git init' => ['GIT_FAILS', 'init', 'Git repository initialization failed: fatal: init failed'],
     'gh repo create' => ['GH_CREATE_FAILS', '1', 'GitHub repository creation failed: GraphQL: Name already exists on this account'],
-]);
+])->skipOnWindows();
 
 it('reports a failed initial commit or push and restores configure.php', function (string $subcommand): void {
     Prompt::fake([
@@ -146,4 +148,4 @@ it('reports a failed initial commit or push and restores configure.php', functio
         ->and(File::get("{$this->package}/configure.php"))->toBe(File::get(skeletonPath().'/configure.php'));
     Prompt::assertStrippedOutputContains("Initial commit push failed: fatal: {$subcommand} failed");
     Prompt::assertStrippedOutputDoesntContain('Package configured successfully');
-})->with(['add', 'commit', 'branch', 'push']);
+})->with(['add', 'commit', 'branch', 'push'])->skipOnWindows();

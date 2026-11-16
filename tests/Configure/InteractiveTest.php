@@ -15,6 +15,8 @@ afterEach(function (): void {
     File::deleteDirectory($this->sandbox);
 });
 
+// configure.php never prompts on native Windows, because Laravel Prompts does not support it.
+
 it('asks for every metadata field, the features and the tools and uses the answers', function (): void {
     Prompt::fake([
         Key::ENTER, // Author name
@@ -40,7 +42,7 @@ it('asks for every metadata field, the features and the tools and uses the answe
     foreach (['Author name', 'Author email', 'Package name', 'Package display name', 'Package description', 'Vendor namespace', 'Main class name', 'Package Features', 'Package Tools'] as $label) {
         Prompt::assertOutputContains($label);
     }
-});
+})->skipOnWindows();
 
 it('shows the next steps and a success message after configuring', function (): void {
     Prompt::fake(array_fill(0, 9, Key::ENTER));
@@ -52,7 +54,7 @@ it('shows the next steps and a success message after configuring', function (): 
     Prompt::assertStrippedOutputContains('Review Dependabot pull requests before merging.');
     Prompt::assertStrippedOutputContains('Package configured successfully');
     Prompt::assertStrippedOutputDoesntContain('You can start your local development using:');
-});
+})->skipOnWindows();
 
 it('shows how to start developing when the Laravel installer passes its directory', function (): void {
     Prompt::fake(array_fill(0, 9, Key::ENTER));
@@ -63,7 +65,7 @@ it('shows how to start developing when the Laravel installer passes its director
     Prompt::assertStrippedOutputContains('You can start your local development using:');
     Prompt::assertStrippedOutputContains('cd laravel-example');
     Prompt::assertStrippedOutputContains('Package configured successfully');
-});
+})->skipOnWindows();
 
 it('shows how to start developing even when no tool adds a next step', function (): void {
     Prompt::fake([
@@ -77,7 +79,7 @@ it('shows how to start developing even when no tool adds a next step', function 
     Prompt::assertStrippedOutputContains('Next Steps');
     Prompt::assertStrippedOutputContains('cd laravel-example');
     Prompt::assertStrippedOutputDoesntContain('Review Dependabot pull requests before merging.');
-});
+})->skipOnWindows();
 
 it('preselects the features and tools given as flags', function (): void {
     Prompt::fake(array_fill(0, 9, Key::ENTER));
@@ -89,7 +91,7 @@ it('preselects the features and tools given as flags', function (): void {
         ->and("{$this->package}/routes")->not->toBeDirectory()
         ->and("{$this->package}/.github/FUNDING.yml")->toBeFile()
         ->and("{$this->package}/.github/dependabot.yml")->not->toBeFile();
-});
+})->skipOnWindows();
 
 it('creates a package without optional resources when every feature and tool is deselected', function (): void {
     Prompt::fake([
@@ -120,7 +122,7 @@ it('creates a package without optional resources when every feature and tool is 
         ->not->toContain('## Security Vulnerabilities')
         ->and(File::json("{$this->package}/composer.json"))->not->toHaveKey('extra.laravel.aliases');
     Prompt::assertStrippedOutputDoesntContain('Next Steps');
-});
+})->skipOnWindows();
 
 it('shows the validation error and accepts the corrected value', function (): void {
     Prompt::fake([
@@ -136,7 +138,7 @@ it('shows the validation error and accepts the corrected value', function (): vo
     expect($exitCode)->toBe(0)
         ->and(File::json("{$this->package}/composer.json"))->toHaveKey('authors.0.email', 'jane@example.com');
     Prompt::assertStrippedOutputContains('Must be a valid email address.');
-});
+})->skipOnWindows();
 
 it('shows the error and keeps configure.php when a step fails', function (): void {
     Prompt::fake(array_fill(0, 9, Key::ENTER));
@@ -147,7 +149,7 @@ it('shows the error and keeps configure.php when a step fails', function (): voi
         ->and("{$this->package}/configure.php")->toBeFile();
     Prompt::assertStrippedOutputContains('Code formatting failed: Pint found style issues.');
     Prompt::assertStrippedOutputDoesntContain('Package configured successfully');
-});
+})->skipOnWindows();
 
 it('restores the arguments and environment of the test process after a run', function (): void {
     $argv = $_SERVER['argv'];
@@ -165,4 +167,4 @@ it('restores the arguments and environment of the test process after a run', fun
         ->and(getenv('PATH'))->toBe($path)
         ->and(getenv('COMPOSER_BINARY'))->toBe($composerBinary)
         ->and(getenv('GH_USER'))->toBe($ghUser);
-});
+})->skipOnWindows();

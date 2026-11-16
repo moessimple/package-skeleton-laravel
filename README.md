@@ -60,7 +60,7 @@ The configuration script supports non-interactive mode for CI or scripted setups
 php configure.php --no-interaction --config --routes
 ```
 
-Non-interactive mode also activates automatically when the `COMPOSER_NO_INTERACTION=1` environment variable is set, when an AI agent is detected, or when standard input is not an interactive terminal.
+Non-interactive mode also activates automatically when the `COMPOSER_NO_INTERACTION=1` environment variable is set, when an AI agent is detected, when standard input is not an interactive terminal, or on native Windows, where Laravel Prompts is not supported. Use WSL for the interactive setup on Windows.
 
 Omitting feature flags includes every package feature; passing specific flags includes only those features. Tools work the same way: omitting tool flags such as `--dependabot` or `--security-policy` includes every tool, while passing specific flags includes only those tools.
 
