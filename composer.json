@@ -84,10 +84,12 @@
         "test:type-coverage": "pest --type-coverage --min=100",
         "test:types": "phpstan",
         "test:unit": [
+            "@prepare",
             "@putenv XDEBUG_MODE=coverage",
             "pest --parallel --coverage --exactly=100.0"
         ],
         "test:configure": [
+            "@prepare",
             "Composer\\Config::disableProcessTimeout",
             "pest --testsuite=Configure --parallel --no-coverage"
         ],
