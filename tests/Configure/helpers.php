@@ -184,7 +184,11 @@ function configureInteractively(string $package, array $arguments = [], array $e
         return new LaravelPackageSkeletonConfigurator($package, interactive: true)->run();
     } finally {
         foreach (array_keys($environment) as $name) {
-            putenv(array_key_exists($name, $original) ? "{$name}={$original[$name]}" : $name);
+            putenv($name);
+        }
+
+        foreach ($original as $name => $value) {
+            putenv("{$name}={$value}");
         }
 
         $_SERVER = $server;
@@ -255,7 +259,15 @@ function isolatedEnvironment(string $sandbox, array $env = []): array
         ];
     }
 
-    return [...$inherited, ...$allowed, ...$env];
+    $environment = [...$allowed, ...$env];
+
+    // Windows treats variable names case-insensitively, so removing an inherited Path would also
+    // remove the PATH set here.
+    if (PHP_OS_FAMILY === 'Windows') {
+        $inherited = array_diff_ukey($inherited, $environment, strcasecmp(...));
+    }
+
+    return [...$inherited, ...$environment];
 }
 
 /**
