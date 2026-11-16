@@ -39,6 +39,11 @@ check on demand.
 
 Dependabot version updates cover only GitHub Actions and wait three days before proposing a new release.
 
+`composer.json` keeps `phpstan/phpstan` below 2.3.6, because PHPStan 2.3.6 removed
+`AnalyserResult::getCollectedData()`, which `pestphp/pest-plugin-type-coverage` 5.1.0 still calls.
+Remove the constraint once a release of the plugin includes
+[pestphp/pest-plugin-type-coverage#75](https://github.com/pestphp/pest-plugin-type-coverage/pull/75).
+
 ## Lint
 
 Lint your code:
