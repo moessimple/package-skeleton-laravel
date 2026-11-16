@@ -28,6 +28,7 @@ it('rejects an invalid value with its reason and changes nothing', function (str
     'a package name without a vendor' => ['--package-name=shop-tools', 'Package name: Package name must be in the format vendor/package.'],
     'a package name with uppercase letters' => ['--package-name=Acme/shop-tools', 'Package name: Package name must be in the format vendor/package.'],
     'a package name with spaces' => ['--package-name=acme/shop tools', 'Package name: Package name must be in the format vendor/package.'],
+    'a package name with a dot after the vendor' => ['--package-name=acme/shop.tools', 'Package name: The package part must not contain a dot, because it becomes the config file name and config() reads a dot as a nested key.'],
     'a nested vendor namespace' => ['--vendor-namespace=Acme\\Tools', 'Vendor namespace: Vendor namespace must be a valid PHP namespace.'],
     'a vendor namespace starting with a digit' => ['--vendor-namespace=1Acme', 'Vendor namespace: Vendor namespace must be a valid PHP namespace.'],
     'a class name starting with a digit' => ['--class-name=1Tools', 'Main class name: Class name must be a valid PHP class name.'],
@@ -37,6 +38,17 @@ it('rejects an invalid value with its reason and changes nothing', function (str
     'a reserved type name as class name' => ['--class-name=Mixed', 'Main class name: Class name must not be a reserved PHP type name.'],
     'a lowercase reserved type name as class name' => ['--class-name=string', 'Main class name: Class name must not be a reserved PHP type name.'],
 ]);
+
+it('reports every invalid metadata option at once', function (): void {
+    $result = configurePackage($this->package, ['--no-interaction', '--author-email=jane', '--class-name=1Tools']);
+
+    expect($result->exitCode())->toBe(1)
+        ->and(configureResult($result->output()))->toHaveKey('errors', [
+            'Author email: Must be a valid email address.',
+            'Main class name: Class name must be a valid PHP class name.',
+        ])
+        ->and(directoryContents($this->package))->toBe($this->original);
+});
 
 it('rejects empty, blank and control-character values for every field', function (string $option, string $label): void {
     $result = configurePackage($this->package, ['--no-interaction', $option]);

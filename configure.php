@@ -244,8 +244,14 @@ class Metadata
                     $this->slug($directoryName === 'package-skeleton' ? 'my-package' : $directoryName),
                 ]),
                 'validate' => function (string $value): ?string {
-                    if (! preg_match('/^[a-z0-9]([_.-]?[a-z0-9]+)*\/[a-z0-9]((_|-{1,2})?[a-z0-9]+)*$/', $value)) {
+                    if (! preg_match('/^[a-z0-9]([_.-]?[a-z0-9]+)*\/[a-z0-9](([_.]|-{1,2})?[a-z0-9]+)*$/', $value)) {
                         return 'Package name must be in the format vendor/package.';
+                    }
+
+                    // Composer allows a dot in the package part, but that part becomes the config file name,
+                    // and config() would read the dot as a nested key.
+                    if (str_contains(explode('/', $value)[1], '.')) {
+                        return 'The package part must not contain a dot, because it becomes the config file name and config() reads a dot as a nested key.';
                     }
 
                     return null;
@@ -308,13 +314,19 @@ class Metadata
         $errors = [];
 
         foreach ($this->fields() as $key => $field) {
+            // After an error, only explicit options are still checked: a default may derive from the rejected
+            // value and would report a follow-up error or read a value that was never stored.
+            if ($errors !== [] && $this->option(str_replace('_', '-', $key)) === null) {
+                continue;
+            }
+
             $value = $field['default']();
             $error = $this->validate($value, $field['validate'] ?? null);
 
             if ($error !== null) {
                 $errors[] = sprintf('%s: %s', $field['label'], $error);
 
-                break;
+                continue;
             }
 
             $this->data[$key] = $value;
