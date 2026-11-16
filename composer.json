@@ -85,7 +85,11 @@
         "test:types": "phpstan",
         "test:unit": [
             "@putenv XDEBUG_MODE=coverage",
-            "pest --parallel --coverage --exactly=100.0"
+            "pest --parallel --coverage --exactly=100.0 --exclude-testsuite=Configure"
+        ],
+        "test:configure": [
+            "Composer\\Config::disableProcessTimeout",
+            "pest --testsuite=Configure --parallel --no-coverage"
         ],
         "test:audit": "@composer audit",
         "test:composer": "@composer validate --strict --no-check-lock",
@@ -94,7 +98,8 @@
             "@test:lint",
             "@test:type-coverage",
             "@test:types",
-            "@test:unit"
+            "@test:unit",
+            "@test:configure"
         ],
         "clear": [
             "@php vendor/bin/testbench package:purge-skeleton --ansi"
