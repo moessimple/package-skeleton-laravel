@@ -84,16 +84,16 @@ function copySkeleton(string $destination): string
  * Runs configure.php in $package as a separate process, the way a package author runs it.
  *
  * $package must be a copy created by copySkeleton() directly inside a sandbox. The process only sees
- * the environment variables listed here plus $env: PATH starts with the sandbox bin/ directory, HOME
- * and TMPDIR point into the sandbox, and git ignores the global and system configuration. Every other
- * inherited variable is removed, so the developer's git identity, GitHub login and agent variables
- * cannot leak into the result.
+ * the environment variables listed here plus $env, where false removes a variable: PATH starts with
+ * the sandbox bin/ directory, HOME and TMPDIR point into the sandbox, and git ignores the global and
+ * system configuration. Every other inherited variable is removed, so the developer's git identity,
+ * GitHub login and agent variables cannot leak into the result.
  *
  * The skeleton's autoloader is prepended instead of installing dependencies in the copy. Pass
  * $withDependencies: false to run configure.php as if `composer install` had not run yet.
  *
  * @param  list<string>  $arguments
- * @param  array<string, string>  $env
+ * @param  array<string, string|false>  $env
  */
 function configurePackage(string $package, array $arguments = [], array $env = [], bool $withDependencies = true): ProcessResult
 {
@@ -117,7 +117,7 @@ function configurePackage(string $package, array $arguments = [], array $env = [
  * passes on variables that also exist in $_SERVER, so they are set there too.
  *
  * @param  list<string>  $arguments
- * @param  array<string, string>  $env
+ * @param  array<string, string|false>  $env
  */
 function configureInteractively(string $package, array $arguments = [], array $env = []): int
 {
@@ -160,7 +160,7 @@ function configureInteractively(string $package, array $arguments = [], array $e
  * configurePackage().
  *
  * @param  list<string>  $arguments
- * @param  array<string, string>  $env
+ * @param  array<string, string|false>  $env
  */
 function configureProcessInTerminal(string $package, array $arguments = [], array $env = [], bool $withDependencies = true): SymfonyProcess
 {
@@ -184,7 +184,7 @@ function configureProcessInTerminal(string $package, array $arguments = [], arra
  * variable is set to false. COMPOSER_BINARY points configure.php to the Composer stub, and every stub
  * appends its calls to the sandbox call log.
  *
- * @param  array<string, string>  $env
+ * @param  array<string, string|false>  $env
  * @return array<string, string|false>
  */
 function isolatedEnvironment(string $sandbox, array $env = []): array
