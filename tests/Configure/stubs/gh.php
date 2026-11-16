@@ -4,7 +4,8 @@ declare(strict_types=1);
 
 /*
  * Stands in for the GitHub CLI while configure.php runs. It records every call in the sandbox call log.
- * It is signed in as GH_USER, or signed out when GH_USER is not set.
+ * It is signed in as GH_USER, or signed out when GH_USER is not set. `repo create` fails when
+ * GH_CREATE_FAILS is 1.
  */
 
 /** @var list<string> $argv */
@@ -26,6 +27,12 @@ if ($user === false) {
 
 if ($arguments === ['api', 'user', '--jq', '.login']) {
     echo $user.PHP_EOL;
+}
+
+if (array_slice($arguments, 0, 2) === ['repo', 'create'] && getenv('GH_CREATE_FAILS') === '1') {
+    fwrite(STDERR, 'GraphQL: Name already exists on this account (createRepository)'.PHP_EOL);
+
+    exit(1);
 }
 
 exit(0);

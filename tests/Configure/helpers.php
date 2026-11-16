@@ -264,3 +264,13 @@ function configureResult(string $output): array
 
     return $result;
 }
+
+/**
+ * The files of the package when configure.php ran `git add`, as recorded by the git stub.
+ *
+ * @return list<string>
+ */
+function stagedFiles(string $sandbox): array
+{
+    return array_values(array_filter(explode(PHP_EOL, File::get("{$sandbox}/staged-files.txt"))));
+}

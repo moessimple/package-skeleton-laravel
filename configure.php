@@ -133,18 +133,6 @@ trait InteractsWithGitHub
 
     /**
      * @param  list<string>  $command
-     * @param  (callable(list<string>): array{success: bool, output: string})|null  $runner
-     * @return array{success: bool, output: string}
-     */
-    private function runGitHubCommand(array $command, ?callable $runner): array
-    {
-        return is_callable($runner)
-            ? $runner($command)
-            : $this->runCommand($command);
-    }
-
-    /**
-     * @param  list<string>  $command
      * @return array{success: bool, output: string}
      */
     private function runCommand(array $command, ?string $cwd = null): array
@@ -1732,7 +1720,7 @@ class LaravelPackageSkeletonConfigurator
     }
 
     /**
-     * @param  array{mode: string, visibility?: string, runner?: callable(list<string>): array{success: bool, output: string}}  $github
+     * @param  array{mode: string, visibility?: string}  $github
      * @return Result
      */
     private function createGitHubRepository(array $github): array
@@ -1743,7 +1731,6 @@ class LaravelPackageSkeletonConfigurator
         };
         $repository = $this->metadata->packageName();
         $commands = [];
-        $runner = $github['runner'] ?? null;
         $configurePath = $this->rootDir.'/configure.php';
         $configureContents = file_exists($configurePath)
             ? file_get_contents($configurePath)
@@ -1759,12 +1746,12 @@ class LaravelPackageSkeletonConfigurator
         ];
         $insideGitCommand = ['git', 'rev-parse', '--is-inside-work-tree'];
         $commands[] = $insideGitCommand;
-        $insideGitResult = $this->runGitHubCommand($insideGitCommand, $runner);
+        $insideGitResult = $this->runCommand($insideGitCommand);
 
         if (! $insideGitResult['success']) {
             $initCommand = ['git', 'init'];
             $commands[] = $initCommand;
-            $initResult = $this->runGitHubCommand($initCommand, $runner);
+            $initResult = $this->runCommand($initCommand);
 
             if (! $initResult['success']) {
                 return $this->failed(
@@ -1779,10 +1766,10 @@ class LaravelPackageSkeletonConfigurator
 
         $removeOriginCommand = ['git', 'remote', 'remove', 'origin'];
         $commands[] = $removeOriginCommand;
-        $this->runGitHubCommand($removeOriginCommand, $runner);
+        $this->runCommand($removeOriginCommand);
 
         $commands[] = $createCommand;
-        $result = $this->runGitHubCommand($createCommand, $runner);
+        $result = $this->runCommand($createCommand);
 
         if (! $result['success']) {
             return $this->failed(
@@ -1814,7 +1801,7 @@ class LaravelPackageSkeletonConfigurator
 
         foreach ($gitCommands as $gitCommand) {
             $commands[] = $gitCommand;
-            $gitResult = $this->runGitHubCommand($gitCommand, $runner);
+            $gitResult = $this->runCommand($gitCommand);
 
             if (! $gitResult['success']) {
                 $this->restoreConfigureScript(
