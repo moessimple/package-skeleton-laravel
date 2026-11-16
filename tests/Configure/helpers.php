@@ -107,6 +107,53 @@ function configurePackage(string $package, array $arguments = [], array $env = [
 }
 
 /**
+ * Runs the configurator for $package inside the test process in interactive mode, which a separate
+ * process only reaches through a terminal. The test fakes the answers with Prompt::fake() before the
+ * call and reads the rendered output through Prompt afterwards.
+ *
+ * configure.php reads its options from $_SERVER['argv'] and starts git, gh and Composer with the
+ * environment of the test process. Both are replaced for the call with the same isolated environment
+ * configurePackage() uses, and restored afterwards even when the run throws. Symfony Process only
+ * passes on variables that also exist in $_SERVER, so they are set there too.
+ *
+ * @param  list<string>  $arguments
+ * @param  array<string, string>  $env
+ */
+function configureInteractively(string $package, array $arguments = [], array $env = []): int
+{
+    require_once skeletonPath().'/configure.php';
+
+    $server = $_SERVER;
+    $envGlobal = $_ENV;
+    $original = getenv();
+    $environment = isolatedEnvironment(dirname($package), $env);
+
+    try {
+        $_SERVER['argv'] = ['configure.php', ...$arguments];
+        $_ENV = [];
+
+        foreach ($environment as $name => $value) {
+            putenv($value === false ? $name : "{$name}={$value}");
+
+            if ($value === false) {
+                unset($_SERVER[$name]);
+            } else {
+                $_SERVER[$name] = $value;
+            }
+        }
+
+        return new LaravelPackageSkeletonConfigurator($package, interactive: true)->run();
+    } finally {
+        foreach (array_keys($environment) as $name) {
+            putenv(array_key_exists($name, $original) ? "{$name}={$original[$name]}" : $name);
+        }
+
+        $_SERVER = $server;
+        $_ENV = $envGlobal;
+    }
+}
+
+/**
  * Prepares configure.php in $package as a process attached to a pseudo terminal, so that standard
  * input is a TTY as in an author's shell. The caller starts it. The Process facade cannot allocate a
  * pseudo terminal, and Windows has none, so tests using this skip Windows. The environment matches

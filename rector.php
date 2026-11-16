@@ -47,9 +47,9 @@ return RectorConfig::configure()
         MakeInheritedMethodVisibilitySameAsParentRector::class,
         AddOverrideAttributeToOverriddenPropertiesRector::class,
         ReadOnlyClassRector::class,
-        // The standalone configurator has no bootstrapped Laravel application.
+        // The standalone configurator has no bootstrapped Laravel application, and its tests swap the globals it reads.
         UnlinkFuncCallToFileFacadeDeleteRector::class => [__DIR__.'/configure.php'],
-        ServerVariableToRequestFacadeRector::class => [__DIR__.'/configure.php'],
+        ServerVariableToRequestFacadeRector::class => [__DIR__.'/configure.php', __DIR__.'/tests/Configure'],
     ])
     ->withPreparedSets(
         deadCode: true,

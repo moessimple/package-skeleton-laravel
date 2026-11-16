@@ -620,7 +620,10 @@ class LaravelPackageSkeletonConfigurator
 
     private Tools $tools;
 
-    public function __construct(protected string $rootDir)
+    /**
+     * @param  bool|null  $interactive  Forces the mode instead of detecting it from the flags, the environment and the terminal. The configure tests use it to reach the interactive flow without a terminal.
+     */
+    public function __construct(protected string $rootDir, private readonly ?bool $interactive = null)
     {
         $this->rootDir = mb_rtrim($rootDir, DIRECTORY_SEPARATOR);
         $this->metadata = new Metadata($this->rootDir);
@@ -1852,6 +1855,10 @@ class LaravelPackageSkeletonConfigurator
 
     private function isNonInteractive(): bool
     {
+        if ($this->interactive !== null) {
+            return ! $this->interactive;
+        }
+
         return $this->input()->getOption('no-interaction') ||
             getenv('COMPOSER_NO_INTERACTION') === '1' ||
             ! $this->stdinIsInteractive() ||
