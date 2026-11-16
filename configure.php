@@ -921,10 +921,9 @@ class LaravelPackageSkeletonConfigurator
             Feature::from(
                 key: 'routes',
                 label: 'Routes',
-            )->onRemove(function () use ($readme): void {
+            )->onRemove(function (): void {
                 $this->removePath('routes');
                 $this->removeChiselSection($this->providerPath(), 'routes');
-                $this->removeLinesContaining($readme, ['route', 'Route']);
                 $this->removeLinesContaining($this->rootDir.'/phpstan.neon.dist', ['        - routes']);
                 $this->removeLinesContaining($this->rootDir.'/rector.php', ["__DIR__.'/routes'"]);
             }),
@@ -958,12 +957,11 @@ class LaravelPackageSkeletonConfigurator
             Feature::from(
                 key: 'commands',
                 label: 'Commands',
-            )->onRemove(function () use ($featureTest, $readme): void {
+            )->onRemove(function () use ($featureTest): void {
                 $this->removePath('src/Console/Commands');
                 $this->removePath('tests/Feature/OutsideConsoleTest.php');
                 $this->removeChiselSection($this->providerPath(), 'commands');
                 $this->removeChiselSection($featureTest, 'commands');
-                $this->removeLinesContaining($readme, ['command', 'Command']);
             }),
         );
 
@@ -1028,9 +1026,8 @@ class LaravelPackageSkeletonConfigurator
                     'Review Dependabot pull requests before merging. This package does not include an automatic merge workflow.',
                 ],
             )
-                ->onRemove(function () use ($readme): void {
+                ->onRemove(function (): void {
                     $this->removePath('.github/dependabot.yml');
-                    $this->removeLinesContaining($readme, ['Dependabot']);
                     $this->removeLinesContaining($this->rootDir.'/.github/CONTRIBUTING.md', ['Dependabot']);
                 }),
         );

@@ -16,6 +16,7 @@ This repository is a Laravel package skeleton for building new packages. Preserv
 
 ## Quick Commands
 
+- Install for skeleton development: `composer install --no-scripts`. A plain `composer install` runs `configure.php`, which configures the skeleton without prompting when an agent or a non-interactive shell runs it.
 - Full validation: `composer test`
 - Apply Rector and Pint fixes: `composer lint`
 - Lint check: `composer test:lint`
