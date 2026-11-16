@@ -58,6 +58,12 @@ jobs:
       - name: Install dependencies
         run: composer install --no-interaction --no-scripts --prefer-dist
 
+      # The parallel test workers share Testbench's bootstrap cache. Without it, every worker writes it on
+      # its first boot, and on Windows replacing a file another process has open fails.
+      - name: Prepare Testbench
+        if: ${{ matrix.selection == 'default' }}
+        run: composer prepare
+
       # configure.php removes these tests, so they run before it, once per operating system.
       - name: Test the configuration script
         if: ${{ matrix.selection == 'default' }}
