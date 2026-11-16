@@ -646,7 +646,20 @@ class LaravelPackageSkeletonConfigurator
             return $this->runNonInteractive();
         }
 
+        if (! $this->supportsInteractivePrompts()) {
+            fwrite(STDERR, 'Configuration on native Windows requires an explicit non-interactive signal. Use WSL for interactive setup, or run:'.PHP_EOL.
+                'composer install --no-scripts'.PHP_EOL.
+                'php configure.php --no-interaction --package-name=acme/laravel-example --vendor-namespace=Acme --class-name=Example --author-name="Jane Doe" --author-email=jane@example.com'.PHP_EOL);
+
+            return self::FAILURE;
+        }
+
         return $this->runInteractive();
+    }
+
+    protected function supportsInteractivePrompts(): bool
+    {
+        return PHP_OS_FAMILY !== 'Windows';
     }
 
     /**
@@ -1766,7 +1779,7 @@ class LaravelPackageSkeletonConfigurator
 
         return $this->input()->getOption('no-interaction') ||
             getenv('COMPOSER_NO_INTERACTION') === '1' ||
-            ! $this->canPrompt() ||
+            ($this->supportsInteractivePrompts() && ! $this->stdinIsInteractive()) ||
             AgentDetector::detect()->isAgent;
     }
 
@@ -1777,18 +1790,14 @@ class LaravelPackageSkeletonConfigurator
     private function hasNonInteractiveSignals(): bool
     {
         return getenv('COMPOSER_NO_INTERACTION') === '1' ||
-            ! $this->canPrompt() ||
+            ($this->supportsInteractivePrompts() && ! $this->stdinIsInteractive()) ||
             in_array('--no-interaction', is_array($_SERVER['argv'] ?? null) ? $_SERVER['argv'] : [], true) ||
             in_array('-n', is_array($_SERVER['argv'] ?? null) ? $_SERVER['argv'] : [], true);
     }
 
-    /**
-     * Laravel Prompts needs an interactive terminal and does not support native Windows, where it throws
-     * before the first prompt. WSL reports Linux and keeps the prompts.
-     */
-    private function canPrompt(): bool
+    private function stdinIsInteractive(): bool
     {
-        return PHP_OS_FAMILY !== 'Windows' && defined('STDIN') && stream_isatty(STDIN);
+        return defined('STDIN') && stream_isatty(STDIN);
     }
 
     private function definition(): InputDefinition

@@ -28,7 +28,7 @@ it('prints the usage with every option and changes nothing', function (string $f
 })->with(['--help', '-h']);
 
 it('rejects an invalid option as a JSON error and changes nothing', function (string $option, string $error): void {
-    $result = configurePackage($this->package, [$option]);
+    $result = configurePackage($this->package, ['--no-interaction', $option]);
 
     expect($result->exitCode())->toBe(1)
         ->and($result->output())->json()->toMatchArray([

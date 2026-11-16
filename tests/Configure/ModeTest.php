@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Process;
 
 beforeEach(function (): void {
     $this->sandbox = createSandbox();
@@ -13,6 +14,88 @@ afterEach(function (): void {
     File::deleteDirectory($this->sandbox);
 });
 
+it('rejects interactive configuration on an unsupported platform before changing files', function (): void {
+    $original = directoryContents($this->package);
+    $script = <<<'PHP'
+        require $argv[1].'/vendor/autoload.php';
+        require $argv[1].'/configure.php';
+
+        $package = $argv[2];
+        $_SERVER['argv'] = ['configure.php'];
+        Laravel\Prompts\Prompt::fake(array_fill(0, 9, Laravel\Prompts\Key::ENTER));
+
+        $configurator = new class($package, interactive: true) extends LaravelPackageSkeletonConfigurator
+        {
+            protected function supportsInteractivePrompts(): bool
+            {
+                return false;
+            }
+        };
+
+        exit($configurator->run());
+        PHP;
+
+    $result = Process::path($this->package)
+        ->env(isolatedEnvironment($this->sandbox))
+        ->run([PHP_BINARY, '-r', $script, skeletonPath(), $this->package]);
+
+    expect($result->exitCode())->toBe(1)
+        ->and($result->output())->toBe('')
+        ->and($result->errorOutput())->toContain('Configuration on native Windows requires an explicit non-interactive signal.')
+        ->toContain('WSL')
+        ->toContain('php configure.php --no-interaction --package-name=acme/laravel-example')
+        ->and(directoryContents($this->package))->toBe($original)
+        ->and(stubCalls($this->sandbox))->toBe([]);
+});
+
+it('rejects piped input on native Windows before changing files without explicit automation', function (): void {
+    $original = directoryContents($this->package);
+    $result = configurePackage($this->package);
+
+    expect($result->exitCode())->toBe(1)
+        ->and($result->output())->toBe('')
+        ->and($result->errorOutput())->toContain('Configuration on native Windows requires an explicit non-interactive signal.')
+        ->and(directoryContents($this->package))->toBe($original)
+        ->and(stubCalls($this->sandbox))->toBe([]);
+})->skip(PHP_OS_FAMILY !== 'Windows', 'Requires native Windows.');
+
+it('rejects piped input without an explicit non-interactive signal on an unsupported platform', function (string $argument): void {
+    $arguments = $argument === '' ? [] : [$argument];
+    $original = directoryContents($this->package);
+    $result = Process::path($this->package)
+        ->env(isolatedEnvironment($this->sandbox))
+        ->run([PHP_BINARY, unsupportedPromptRunner($this->sandbox), skeletonPath(), $this->package, ...$arguments]);
+
+    expect($result->exitCode())->toBe(1)
+        ->and($result->output())->toBe('')
+        ->and($result->errorOutput())->toContain('native Windows')
+        ->toContain('composer install --no-scripts')
+        ->toContain('php configure.php --no-interaction')
+        ->and(directoryContents($this->package))->toBe($original)
+        ->and(stubCalls($this->sandbox))->toBe([]);
+})->with([
+    'no flags' => '',
+    'metadata flags alone' => '--package-name=acme/laravel-example',
+]);
+
+it('accepts explicit non-interactive signals on an unsupported platform', function (string $flag, string $variable, string $value): void {
+    $arguments = $flag === '' ? [] : [$flag];
+    $env = $variable === '' ? [] : [$variable => $value];
+    $result = Process::path($this->package)
+        ->env(isolatedEnvironment($this->sandbox, $env))
+        ->run([PHP_BINARY, unsupportedPromptRunner($this->sandbox), skeletonPath(), $this->package, ...$arguments]);
+
+    expect($result->exitCode())->toBe(0)
+        ->and($result->errorOutput())->toBe('')
+        ->and(configureResult($result->output())['success'])->toBeTrue()
+        ->and("{$this->package}/configure.php")->not->toBeFile();
+})->with([
+    'long flag' => ['--no-interaction', '', ''],
+    'short flag' => ['-n', '', ''],
+    'Composer environment' => ['', 'COMPOSER_NO_INTERACTION', '1'],
+    'coding agent' => ['', 'AI_AGENT', 'example-agent'],
+]);
+
 // Tests that need an interactive standard input run in a pseudo terminal, which Windows does not offer.
 
 it('runs without prompts and prints one JSON line when standard input is not a terminal', function (): void {
@@ -21,7 +104,7 @@ it('runs without prompts and prints one JSON line when standard input is not a t
     expect($result->exitCode())->toBe(0)
         ->and(explode(PHP_EOL, mb_rtrim($result->output())))->toHaveCount(1)
         ->and(configureResult($result->output())['success'])->toBeTrue();
-});
+})->skipOnWindows();
 
 it('runs without prompts and prints one JSON line in a terminal when the no-interaction flag is given', function (string $flag): void {
     $process = configureProcessInTerminal($this->package, [$flag]);

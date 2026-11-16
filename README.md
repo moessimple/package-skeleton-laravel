@@ -12,7 +12,7 @@ A starter template for building beautiful Laravel packages.
 
 This skeleton provides everything you need to start building a Laravel package. It comes pre-configured with a service provider built on spatie/laravel-package-tools, testing via Pest, static analysis via Larastan, Rector and Pint, and a workbench application for end-to-end development, all wired up and ready to go. `composer test` checks Composer metadata, lint, PHPStan at level max, and 100% line and type coverage.
 
-An interactive configuration script personalizes the skeleton for your package during `composer install`, setting up your namespace, service provider, and only the features you need.
+The configuration script personalizes the skeleton for your package during `composer install`, setting up your namespace, service provider, and only the features you need.
 
 ## Getting Started
 
@@ -25,13 +25,20 @@ cd my-package
 
 Requires PHP 8.4+, Composer 2.11+, and Xdebug or PCOV for line coverage.
 
-Then, install your dependencies. The interactive configuration script will run automatically:
+On native Windows, use WSL for interactive setup, or install and configure non-interactively with your package details:
+
+```sh
+composer install --no-scripts
+php configure.php --no-interaction --package-name=acme/laravel-example --vendor-namespace=Acme --class-name=Example --author-name="Jane Doe" --author-email=jane@example.com
+```
+
+On macOS, Linux or WSL, install your dependencies. The configuration script will run automatically:
 
 ```bash
 composer install
 ```
 
-If you prefer to configure manually, install without scripts and run the configuration separately:
+To run interactive configuration separately on these systems, install without scripts first:
 
 ```bash
 composer install --no-scripts
@@ -60,7 +67,9 @@ The configuration script supports non-interactive mode for CI or scripted setups
 php configure.php --no-interaction --config --routes
 ```
 
-Non-interactive mode also activates automatically when the `COMPOSER_NO_INTERACTION=1` environment variable is set, when an AI agent is detected, when standard input is not an interactive terminal, or on native Windows, where Laravel Prompts is not supported. Use WSL for the interactive setup on Windows.
+Non-interactive mode also activates automatically when the `COMPOSER_NO_INTERACTION=1` environment variable is set or when an AI agent is detected. On macOS, Linux and WSL, it also activates when standard input is not an interactive terminal.
+
+Native Windows requires an explicit non-interactive signal even when standard input is piped, including through Composer. Without one, configuration stops before changing package files.
 
 Omitting feature flags includes every package feature; passing specific flags includes only those features. Tools work the same way: omitting tool flags such as `--dependabot` or `--security-policy` includes every tool, while passing specific flags includes only those tools.
 
@@ -68,7 +77,7 @@ Pass `--package-name=acme/laravel-example`, `--vendor-namespace=Acme`, `--class-
 
 Non-interactive runs print a single line of JSON describing the result, including the resolved metadata, selected features and tools, and any manual follow-up steps. Invalid options fail with a JSON error before any files are changed.
 
-During configuration, `README_PACKAGE.md` and `AGENTS_PACKAGE.md` are customized and moved to `README.md` and `AGENTS.md`, replacing the skeleton files. The script also links `CLAUDE.md` to `AGENTS.md` and `.claude` to `.agents` so both agent formats share the same guidance.
+During configuration, `README_PACKAGE.md` and `AGENTS_PACKAGE.md` are customized and moved to `README.md` and `AGENTS.md`, replacing the skeleton files. The script also links `CLAUDE.md` to `AGENTS.md` and `.claude` to `.agents` so both agent formats share the same guidance. If symbolic links cannot be created, it copies the files and directories instead.
 
 ## After Setup
 
