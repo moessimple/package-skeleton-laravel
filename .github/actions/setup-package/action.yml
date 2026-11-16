@@ -38,4 +38,7 @@ runs:
     - name: Install Composer dependencies
       # A package commits no composer.lock, so CI resolves what a consuming app would get today.
       shell: bash
-      run: composer update --prefer-dist --no-interaction --no-progress
+      run: |
+        composer update --prefer-dist --no-interaction --no-progress --no-scripts
+        composer clear
+        composer prepare

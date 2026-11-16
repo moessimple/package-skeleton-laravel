@@ -7,6 +7,7 @@ use Rector\CodingStyle\Rector\ClassMethod\MakeInheritedMethodVisibilitySameAsPar
 use Rector\Config\RectorConfig;
 use Rector\Php82\Rector\Class_\ReadOnlyClassRector;
 use Rector\Php85\Rector\Property\AddOverrideAttributeToOverriddenPropertiesRector;
+use RectorLaravel\Rector\ArrayDimFetch\ServerVariableToRequestFacadeRector;
 use RectorLaravel\Rector\FuncCall\UnlinkFuncCallToFileFacadeDeleteRector;
 use RectorLaravel\Set\LaravelSetList;
 
@@ -46,8 +47,9 @@ return RectorConfig::configure()
         MakeInheritedMethodVisibilitySameAsParentRector::class,
         AddOverrideAttributeToOverriddenPropertiesRector::class,
         ReadOnlyClassRector::class,
-        // configure.php runs before composer install, so the File facade is not available yet.
+        // The standalone configurator has no bootstrapped Laravel application.
         UnlinkFuncCallToFileFacadeDeleteRector::class => [__DIR__.'/configure.php'],
+        ServerVariableToRequestFacadeRector::class => [__DIR__.'/configure.php'],
     ])
     ->withPreparedSets(
         deadCode: true,

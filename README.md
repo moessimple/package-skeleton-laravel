@@ -1,21 +1,4 @@
-<!-- package-header:start
-<div align="center">
-    <h1>Package Name</h1>
-</div>
-
-<p align="center">
-    <a href="https://packagist.org/packages/vendor-name/laravel-package-name"><img src="https://img.shields.io/packagist/v/vendor-name/laravel-package-name.svg?style=flat-square" alt="Packagist"></a>
-    <a href="https://packagist.org/packages/vendor-name/laravel-package-name"><img src="https://img.shields.io/packagist/php-v/vendor-name/laravel-package-name.svg?style=flat-square" alt="PHP from Packagist"></a>
-    <a href="https://packagist.org/packages/vendor-name/laravel-package-name"><img src="https://badge.laravel.cloud/badge/vendor-name/laravel-package-name?style=flat" alt="Laravel versions"></a>
-    <a href="https://github.com/vendor-name/laravel-package-name/actions"><img alt="GitHub Workflow Status (main)" src="https://img.shields.io/github/actions/workflow/status/vendor-name/laravel-package-name/tests.yml?branch=main&label=Tests&style=flat-square"></a>
-    <a href="https://packagist.org/packages/vendor-name/laravel-package-name"><img src="https://img.shields.io/packagist/dt/vendor-name/laravel-package-name.svg?style=flat-square" alt="Total Downloads"></a>
-</p>
-package-header:end -->
-
-<!-- template:start -->
-<div align="center">
-    <h1>Package Skeleton Laravel</h1>
-</div>
+# Package Skeleton Laravel
 
 <p align="center">
     <a href="https://github.com/moessimple/package-skeleton-laravel/actions/workflows/tests.yml"><img src="https://github.com/moessimple/package-skeleton-laravel/actions/workflows/tests.yml/badge.svg?branch=main" alt="Tests"></a>
@@ -23,131 +6,78 @@ package-header:end -->
     <a href="https://github.com/moessimple/package-skeleton-laravel/actions/workflows/lint.yml"><img src="https://github.com/moessimple/package-skeleton-laravel/actions/workflows/lint.yml/badge.svg?branch=main" alt="Lint"></a>
 </p>
 
+A starter template for building beautiful Laravel packages.
+
 ## Introduction
 
-A template for Laravel 12 and 13 packages on PHP 8.4 or newer. It comes with:
+This skeleton provides everything you need to start building a Laravel package. It comes pre-configured with a service provider built on spatie/laravel-package-tools, testing via Pest, static analysis via Larastan, Rector and Pint, and a workbench application for end-to-end development, all wired up and ready to go. `composer test` checks Composer metadata, lint, PHPStan at level max, and 100% line and type coverage.
 
-- a service provider built on [spatie/laravel-package-tools](https://github.com/spatie/laravel-package-tools), with placeholder config, views, translations, assets, migration, route file and Artisan command
-- one quality gate, `composer test`: `composer validate`, Rector and Pint, 100% type coverage, PHPStan at level max, and Pest with exactly 100% line coverage
-- GitHub Actions for lint, static analysis, and tests across PHP 8.4 and 8.5, Laravel 12 and 13, lowest and newest dependencies, on Linux and Windows
-- an Orchestra Testbench workbench (`composer serve`) and a Laravel Boost skill for apps that install the package
+An interactive configuration script personalizes the skeleton for your package during `composer install`, setting up your namespace, service provider, and only the features you need.
 
 ## Getting Started
 
-> **Requires PHP 8.4+, Composer 2.11+, and a code coverage driver like
-> [Xdebug](https://xdebug.org/docs/install) or [PCOV](https://github.com/krakjoe/pcov).**
-
-1. Create a repository with **Use this template** and clone it.
-2. Run the configure script.
-
-    ```bash
-    php configure.php
-    ```
-
-    The script asks for the package and author details and shows what it will change. After you confirm, it turns the template into your package, installs the dependencies and runs the full quality gate.
-
-    To run it without questions, for example from a coding agent, pass `--no-interaction` and the answers as options. `php configure.php --help` lists them.
-
-    ```bash
-    php configure.php --no-interaction --vendor=acme --package=laravel-example --author-name="Jane Doe" --author-email=jane@example.com
-    ```
-
-3. GitHub does not copy repository settings from a template. Add a ruleset for `main` that requires a pull request before merging and the status checks `lint`, `static` and `tests`, so a failing check blocks the merge. Set the number of required approvals to fit your team. Turn on Dependabot alerts and security updates as well, so GitHub reports new advisories for your dependencies and opens a fix pull request.
-
-Everything below is the README of your package. The configure script removes everything above this line and activates the package header.
-
-<!-- template:end -->
-
-This is where your description should go. Limit it to a paragraph or two. Consider adding a small example.
-
-## Installation
-
-You can install the package via Composer:
+Press the **Use this template** button at the top of this repository to create your package, or clone it directly:
 
 ```bash
-composer require vendor-name/laravel-package-name
+git clone https://github.com/moessimple/package-skeleton-laravel.git my-package
+cd my-package
 ```
 
-You can publish and run the migrations with:
+Requires PHP 8.4+, Composer 2.11+, and Xdebug or PCOV for line coverage.
+
+Then, install your dependencies. The interactive configuration script will run automatically:
 
 ```bash
-php artisan vendor:publish --tag="package-name-migrations"
-php artisan migrate
+composer install
 ```
 
-You can publish the config file with:
+If you prefer to configure manually, install without scripts and run the configuration separately:
 
 ```bash
-php artisan vendor:publish --tag="package-name-config"
+composer install --no-scripts
+php configure.php
 ```
 
-This is the contents of the published config file:
-
-```php
-return [
-
-    'placeholder' => 'default',
-
-];
-```
-
-Optionally, you can publish the views, translations and public assets using:
+Once configured, verify everything is working:
 
 ```bash
-php artisan vendor:publish --tag="package-name-views"
-php artisan vendor:publish --tag="package-name-translations"
-php artisan vendor:publish --tag="package-name-assets"
+composer test
 ```
 
-## Usage
+You may also boot the included workbench application to test your package end-to-end:
 
-```php
-use VendorName\PackageName\Facades\PackageName;
-
-// Add a basic usage example here.
+```bash
+composer serve
 ```
 
-## Available Tooling
+The workbench app will be available at `http://localhost:8000`.
 
-### Development
+## Non-Interactive Configuration
 
-- `composer serve`: builds the workbench and serves a Laravel app with the package installed.
-- `composer build`: builds the workbench without serving it: publishes the assets and migrates a fresh SQLite database.
+The configuration script supports non-interactive mode for CI or scripted setups. Pass `--no-interaction` along with any metadata options you'd like to prefill:
 
-### Security
+```bash
+php configure.php --no-interaction --config --routes
+```
 
-- `composer test:audit`: checks the installed dependencies for known vulnerabilities and abandoned packages.
+Non-interactive mode also activates automatically when the `COMPOSER_NO_INTERACTION=1` environment variable is set, when an AI agent is detected, or when standard input is not an interactive terminal.
 
-### Code Quality
+Omitting feature flags includes every package feature; passing specific flags includes only those features. Tools work the same way: omitting tool flags such as `--dependabot` or `--security-policy` includes every tool, while passing specific flags includes only those tools.
 
-- `composer lint`: Rector and Pint, fixing in place.
-- `composer test:lint`: the same checks read-only (Rector `--dry-run`, Pint `--test`).
-- `composer test:composer`: validates `composer.json` strictly.
+Pass `--package-name=acme/laravel-example`, `--vendor-namespace=Acme`, `--class-name=Example`, `--package-description="An example package."`, `--author-name="Jane Doe"` and `--author-email=jane@example.com` to prefill the metadata.
 
-### Testing
+Non-interactive runs print a single line of JSON describing the result, including the resolved metadata, selected features and tools, and any manual follow-up steps. Invalid metadata options fail with a JSON error before any files are changed.
 
-- `composer test:types`: PHPStan at `level: max` over the package, tests and workbench.
-- `composer test:type-coverage`: fails under 100% type coverage (Pest).
-- `composer test:unit`: Pest in parallel under an exact 100% line-coverage gate.
-- `composer test`: the full gate, in order: `composer.json` validation, lint, type coverage, static analysis, tests.
+During configuration, `README_PACKAGE.md` and `AGENTS_PACKAGE.md` are customized and moved to `README.md` and `AGENTS.md`, replacing the skeleton files. The script also links `CLAUDE.md` to `AGENTS.md` and `.claude` to `.agents` so both agent formats share the same guidance.
 
-## Changelog
+## After Setup
 
-Please see the [releases](https://github.com/vendor-name/laravel-package-name/releases) for what has changed in each version.
+A few GitHub settings need your attention after creating your package repository:
 
-## Contributing
+- Require pull requests and the `lint`, `static` and `tests` status checks in a ruleset for `main`. Choose required approvals to fit your team.
+- Enable Dependabot alerts and security updates.
+- Review Dependabot pull requests before merging. This skeleton does not include an automatic merge workflow.
 
-Please see [CONTRIBUTING](.github/CONTRIBUTING.md) for details.
+GitHub releases are the changelog. Workflows only read the repository and report results; they do not push commits. No additional repository secrets are required.
 
-## Security Vulnerabilities
-
-Please review [our security policy](.github/SECURITY.md) on how to report security vulnerabilities.
-
-## Credits
-
-- [Author Name](https://github.com/vendor-name)
-- [All Contributors](../../contributors)
-
-## License
-
-The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
+Configuration removes `configure.php`, its Composer hooks, its configure-only dependencies and the skeleton's configure workflow. The template documents become the package documents, and the generated package keeps its tests and development tools.

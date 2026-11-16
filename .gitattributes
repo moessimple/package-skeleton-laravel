@@ -12,4 +12,8 @@
 /testbench.yaml     export-ignore
 /workbench          export-ignore
 /.claude            export-ignore
+/.agents            export-ignore
 /CLAUDE.md          export-ignore
+/AGENTS.md          export-ignore
+/AGENTS_PACKAGE.md  export-ignore
+/README_PACKAGE.md  export-ignore
