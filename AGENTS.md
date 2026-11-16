@@ -9,6 +9,7 @@ This repository is a Laravel package skeleton for building new packages. Preserv
 - Treat `configure.php` as a one-time bootstrap script: package authors run `composer install` to start configuration automatically, or `composer install --no-scripts` followed by `php configure.php` to run it manually, replacing placeholders, pruning disabled features/tools, optionally creating a GitHub repository, and deleting the script after success.
 - When changing package capabilities or maintenance tooling in the skeleton, keep the configure feature/tool mappings, opt-in non-interactive feature and tool flags, files, Composer metadata, `README_PACKAGE.md`, `AGENTS_PACKAGE.md`, AI guidance, `AGENTS.md` as the skeleton guidance source, `AGENTS_PACKAGE.md` as the package guidance source, and `.agents/skills` as the canonical local skills source in sync. `configure.php` generates package `README.md` and `AGENTS.md`, then links `CLAUDE.md` to `AGENTS.md` and `.claude` to `.agents`.
 - Do not add runtime dependencies, generated files, or extra scaffold unless the package feature needs them.
+- Cover every behavior of `configure.php` with permanent tests in `tests/Configure`. They run the script against temporary copies of the skeleton with stubbed `composer`, `git` and `gh`, and `configure.php` removes them, their registration in `tests/Pest.php` and `phpunit.xml.dist`, and `test:configure` from generated packages. When `configure.php` changes, update these tests in the same change.
 - Keep temporary scaffold verification out of the shipped package test suite.
 - Keep generated documentation aligned with the selected features and tools. Provider code is removed through Chisel markers; README sections are removed through the headings registered in `configure.php`. When adding feature-dependent text or changing a heading, update its removal rule and verify the generated README with that feature enabled and disabled. Keep package guidance in `AGENTS_PACKAGE.md` consistent with the same selection.
 - Never lower the quality bar: no PHPStan baseline, `ignoreErrors`, `@codeCoverageIgnore`, or lowered coverage thresholds.
@@ -17,12 +18,13 @@ This repository is a Laravel package skeleton for building new packages. Preserv
 ## Quick Commands
 
 - Install for skeleton development: `composer install --no-scripts`. A plain `composer install` runs `configure.php`, which configures the skeleton without prompting when an agent or a non-interactive shell runs it.
-- Full validation: `composer test`
+- Full validation: `composer test`, including the configure tests
+- Configure tests: `composer test:configure`. The test that runs the real Composer needs network access; run it alone with `vendor/bin/pest --group=composer`.
 - Apply Rector and Pint fixes: `composer lint`
 - Lint check: `composer test:lint`
 - Static analysis (PHPStan max): `composer test:types`
 - Type coverage (100%): `composer test:type-coverage`
-- Pest tests (100% line coverage): `composer test:unit`
+- Pest package tests (100% line coverage, without the configure tests): `composer test:unit`
 - Workbench build: `composer build`
 - Workbench server: `composer serve`
 

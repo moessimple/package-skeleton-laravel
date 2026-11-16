@@ -80,4 +80,8 @@ A few GitHub settings need your attention after creating your package repository
 
 GitHub releases are the changelog. Workflows only read the repository and report results; they do not push commits. No additional repository secrets are required.
 
-Configuration removes `configure.php`, its Composer hooks, its configure-only dependencies and the skeleton's configure workflow. The template documents become the package documents, and the generated package keeps its tests and development tools.
+Configuration removes `configure.php`, its Composer hooks, its configure-only dependencies, its tests and the skeleton's configure workflow. The template documents become the package documents, and the generated package keeps its tests and development tools.
+
+## Developing the Skeleton
+
+Changes to the skeleton itself start from `composer install --no-scripts`, so the skeleton stays unconfigured. `composer test` then also runs `composer test:configure`, the tests in `tests/Configure` that run `configure.php` against temporary copies of the skeleton. One of them runs the real Composer and needs network access.
