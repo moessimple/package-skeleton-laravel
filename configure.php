@@ -1085,6 +1085,7 @@ class LaravelPackageSkeletonConfigurator
         $this->updateComposerJson($selectedFeatures);
         $this->removePath('.agents/skills/skeleton-development');
         $this->removePath('.github/workflows/configure.yml');
+        $this->removeConfigureTests();
         $this->removeLinesContaining($this->rootDir.'/phpstan.neon.dist', ['configure.php']);
         $this->removeLinesContaining($this->rootDir.'/rector.php', ['configure.php', 'UnlinkFuncCallToFileFacadeDeleteRector', 'ServerVariableToRequestFacadeRector', 'standalone configurator']);
 
@@ -1335,6 +1336,9 @@ class LaravelPackageSkeletonConfigurator
 
         unset($composer['scripts']['post-install-cmd']);
         unset($composer['scripts']['post-update-cmd']);
+        unset($composer['scripts']['test:configure']);
+
+        $composer['scripts']['test'] = array_values(array_diff((array) $composer['scripts']['test'], ['@test:configure']));
 
         $composer['autoload']['psr-4'] = [$namespace => 'src/'];
         $composer['autoload-dev']['psr-4'] =
@@ -1372,6 +1376,18 @@ class LaravelPackageSkeletonConfigurator
         );
 
         $this->trackModified($path);
+    }
+
+    /**
+     * The configure tests only check this script, so the generated package ships without them. They are
+     * not restored when a later step fails, because a rerun of configure.php does not need them.
+     */
+    private function removeConfigureTests(): void
+    {
+        $this->removePath('tests/Configure');
+        $this->removeChiselSection($this->rootDir.'/tests/Pest.php', 'configure-tests');
+        $this->removeChiselSection($this->rootDir.'/phpunit.xml.dist', 'configure-tests');
+        $this->removeLinesContaining($this->rootDir.'/phpunit.xml.dist', ['defaultTestSuite=']);
     }
 
     private function removeConfigureDependencies(): void
