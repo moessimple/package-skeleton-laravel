@@ -258,8 +258,10 @@ function isolatedEnvironment(string $sandbox, array $env = []): array
         'CONFIGURE_TEST_CALLS' => "{$sandbox}/calls.log",
     ];
 
+    // Windows tools such as Composer read the user's home from APPDATA instead of HOME.
     if (PHP_OS_FAMILY === 'Windows') {
         $allowed += [
+            'APPDATA' => "{$sandbox}/home",
             'SystemRoot' => (string) getenv('SystemRoot'),
             'TEMP' => "{$sandbox}/tmp",
             'TMP' => "{$sandbox}/tmp",
