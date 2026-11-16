@@ -47,7 +47,9 @@ it('rejects empty, blank, control-character and invalid UTF-8 values for every f
         ->toHaveKey('errors', ["{$label}: Enter a non-empty UTF-8 value without control characters."])
         ->and(directoryContents($this->package))->toBe($this->original);
 })->with([
+    'an empty author name' => ['--author-name=', 'Author name'],
     'a blank author name' => ['--author-name=  ', 'Author name'],
+    'an empty author email' => ['--author-email=', 'Author email'],
     'a blank author email' => ['--author-email=   ', 'Author email'],
     'a package name with a tab' => ["--package-name=acme/shop\ttools", 'Package name'],
     'a display name with a newline' => ["--package-name-human=Shop\nTools", 'Package display name'],
