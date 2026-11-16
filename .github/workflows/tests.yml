@@ -98,8 +98,8 @@ jobs:
       - name: Static analysis of the package code
         if: ${{ runner.os == 'Linux' }}
         run: |
-          sed -i '/pest-plugin-phpstan/d' phpstan.neon.dist
-          vendor/bin/phpstan analyse config database routes src --no-progress
+          sed -i '/pest-plugin-phpstan/d; /- tests\//d; /- workbench\//d; /- configure\.php/d' phpstan.neon.dist
+          composer test:types
 
   tests:
     # The single check a ruleset requires for this workflow, so the required checks do not change

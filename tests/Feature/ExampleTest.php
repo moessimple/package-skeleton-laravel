@@ -8,7 +8,7 @@ use Illuminate\Support\ServiceProvider;
 /* @chisel-facade */
 use VendorName\PackageName\Facades\PackageName as PackageNameFacade;
 /* @end-chisel-facade */
-use VendorName\PackageName\PackageName;
+use VendorName\PackageName\PackageName as PackageClass;
 use VendorName\PackageName\PackageNameServiceProvider;
 
 it('declares the service provider and facade alias for package discovery', function (): void {
@@ -19,12 +19,12 @@ it('declares the service provider and facade alias for package discovery', funct
 });
 
 it('binds the package class as a singleton', function (): void {
-    expect(resolve(PackageName::class))->toBe(resolve(PackageName::class));
+    expect(resolve(PackageClass::class))->toBe(resolve(PackageClass::class));
 });
 
 /* @chisel-facade */
 it('resolves the facade to the bound package class', function (): void {
-    expect(PackageNameFacade::getFacadeRoot())->toBe(resolve(PackageName::class));
+    expect(PackageNameFacade::getFacadeRoot())->toBe(resolve(PackageClass::class));
 });
 /* @end-chisel-facade */
 
