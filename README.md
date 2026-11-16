@@ -60,13 +60,13 @@ The configuration script supports non-interactive mode for CI or scripted setups
 php configure.php --no-interaction --config --routes
 ```
 
-Non-interactive mode also activates automatically when the `COMPOSER_NO_INTERACTION=1` environment variable is set, when an AI agent is detected, or when standard input is not an interactive terminal.
+Non-interactive mode also activates automatically when the `COMPOSER_NO_INTERACTION=1` environment variable is set, when an AI agent is detected, when standard input is not an interactive terminal, or on native Windows, where Laravel Prompts is not supported. Use WSL for the interactive setup on Windows.
 
 Omitting feature flags includes every package feature; passing specific flags includes only those features. Tools work the same way: omitting tool flags such as `--dependabot` or `--security-policy` includes every tool, while passing specific flags includes only those tools.
 
 Pass `--package-name=acme/laravel-example`, `--vendor-namespace=Acme`, `--class-name=Example`, `--package-description="An example package."`, `--author-name="Jane Doe"` and `--author-email=jane@example.com` to prefill the metadata.
 
-Non-interactive runs print a single line of JSON describing the result, including the resolved metadata, selected features and tools, and any manual follow-up steps. Invalid metadata options fail with a JSON error before any files are changed.
+Non-interactive runs print a single line of JSON describing the result, including the resolved metadata, selected features and tools, and any manual follow-up steps. Invalid options fail with a JSON error before any files are changed.
 
 During configuration, `README_PACKAGE.md` and `AGENTS_PACKAGE.md` are customized and moved to `README.md` and `AGENTS.md`, replacing the skeleton files. The script also links `CLAUDE.md` to `AGENTS.md` and `.claude` to `.agents` so both agent formats share the same guidance.
 
@@ -80,4 +80,8 @@ A few GitHub settings need your attention after creating your package repository
 
 GitHub releases are the changelog. Workflows only read the repository and report results; they do not push commits. No additional repository secrets are required.
 
-Configuration removes `configure.php`, its Composer hooks, its configure-only dependencies and the skeleton's configure workflow. The template documents become the package documents, and the generated package keeps its tests and development tools.
+Configuration removes `configure.php`, its Composer hooks, its configure-only dependencies, its tests and the skeleton's configure workflow. The template documents become the package documents, and the generated package keeps its tests and development tools.
+
+## Developing the Skeleton
+
+Changes to the skeleton itself start from `composer install --no-scripts`, so the skeleton stays unconfigured. `composer test` then also runs `composer test:configure`, the tests in `tests/Configure` that run `configure.php` against temporary copies of the skeleton. One of them runs the real Composer and needs network access.

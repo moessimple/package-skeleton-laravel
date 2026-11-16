@@ -1,0 +1,44 @@
+<?php
+
+declare(strict_types=1);
+
+/*
+ * Stands in for the GitHub CLI while configure.php runs. It records every call in the sandbox call log.
+ * It is signed in as GH_USER, or signed out when GH_USER is not set. Reading the user fails when
+ * GH_API_FAILS is 1, and `repo create` fails when GH_CREATE_FAILS is 1.
+ */
+
+/** @var list<string> $argv */
+$arguments = array_slice($argv, 1);
+
+file_put_contents(
+    (string) getenv('CONFIGURE_TEST_CALLS'),
+    'gh '.implode(' ', $arguments).PHP_EOL,
+    FILE_APPEND,
+);
+
+$user = getenv('GH_USER');
+
+if ($user === false) {
+    fwrite(STDERR, 'You are not logged into any GitHub hosts.'.PHP_EOL);
+
+    exit(1);
+}
+
+if ($arguments === ['api', 'user', '--jq', '.login']) {
+    if (getenv('GH_API_FAILS') === '1') {
+        fwrite(STDERR, 'HTTP 401: Bad credentials (https://api.github.com/user)'.PHP_EOL);
+
+        exit(1);
+    }
+
+    echo $user.PHP_EOL;
+}
+
+if (array_slice($arguments, 0, 2) === ['repo', 'create'] && getenv('GH_CREATE_FAILS') === '1') {
+    fwrite(STDERR, 'GraphQL: Name already exists on this account (createRepository)'.PHP_EOL);
+
+    exit(1);
+}
+
+exit(0);

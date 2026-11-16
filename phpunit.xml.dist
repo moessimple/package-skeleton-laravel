@@ -13,6 +13,7 @@
     failOnEmptyTestSuite="true"
     beStrictAboutOutputDuringTests="true"
     cacheDirectory=".phpunit.cache"
+    defaultTestSuite="Arch,Feature,Unit"
     backupStaticProperties="false"
 >
     <testsuites>
@@ -25,6 +26,11 @@
         <testsuite name="Unit">
             <directory>tests/Unit</directory>
         </testsuite>
+        <!-- @chisel-configure-tests -->
+        <testsuite name="Configure">
+            <directory>tests/Configure</directory>
+        </testsuite>
+        <!-- @end-chisel-configure-tests -->
     </testsuites>
     <source>
         <include>

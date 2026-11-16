@@ -27,6 +27,12 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest]
+        selection: [default, minimal]
+        include:
+          - selection: default
+            flags: ''
+          - selection: minimal
+            flags: --config --security-policy
 
     defaults:
       run:
@@ -52,8 +58,16 @@ jobs:
       - name: Install dependencies
         run: composer install --no-interaction --no-scripts --prefer-dist
 
+      # configure.php removes these tests, so they run before it, once per operating system.
+      - name: Test the configuration script
+        if: ${{ matrix.selection == 'default' }}
+        run: composer test:configure
+
       - name: Configure the template
-        run: php configure.php --no-interaction --package-name=acme/laravel-example --vendor-namespace=Acme --class-name=Example --package-description="An example Laravel package." --author-name="Jane Doe" --author-email=jane@example.com
+        env:
+          SELECTION_FLAGS: ${{ matrix.flags }}
+        # SELECTION_FLAGS stays unquoted so that each flag becomes its own argument.
+        run: php configure.php --no-interaction --package-name=acme/laravel-example --vendor-namespace=Acme --class-name=Example --package-description="An example Laravel package." --author-name="Jane Doe" --author-email=jane@example.com $SELECTION_FLAGS
 
       - name: Validate the generated package
         run: composer test
