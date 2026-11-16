@@ -9,6 +9,8 @@ use Illuminate\Support\Str;
 use Symfony\Component\Process\ExecutableFinder;
 use Symfony\Component\Process\Process as SymfonyProcess;
 
+use function Orchestra\Sidekick\Filesystem\is_symlink;
+
 /**
  * The skeleton checkout these tests belong to. Tests read from it but never write to it.
  */
@@ -84,25 +86,26 @@ function copySkeleton(string $destination): string
 /**
  * Gives $package its own physical copy of the skeleton's vendor/ directory and composer.lock, for the
  * test that runs the real Composer. composer.lock is not committed; without one, configure.php's
- * `composer remove` resolves and writes it. Symbolic links are left out: Testbench links its Laravel skeleton
- * back to the skeleton's vendor/ directory, and following that link would loop and let the run write
- * into the skeleton. Testbench creates the link again inside the copy when it needs it.
+ * `composer remove` resolves and writes it. Links are neither copied nor followed: Testbench links its
+ * Laravel skeleton back to the skeleton's vendor/ directory, and following that link would loop and let
+ * the run write into the skeleton. On Windows that link is a junction, which PHP's is_link() does not
+ * detect, so Testbench's own is_symlink() decides. Testbench creates the link again inside the copy when
+ * it needs it.
  */
 function copyDependencies(string $package): void
 {
     $vendor = skeletonPath().'/vendor';
     $iterator = new RecursiveIteratorIterator(
-        new RecursiveDirectoryIterator($vendor, FilesystemIterator::SKIP_DOTS),
+        new RecursiveCallbackFilterIterator(
+            new RecursiveDirectoryIterator($vendor, FilesystemIterator::SKIP_DOTS),
+            fn (SplFileInfo $item): bool => ! is_symlink($item->getPathname()),
+        ),
         RecursiveIteratorIterator::SELF_FIRST,
     );
 
     /** @var SplFileInfo $item */
     foreach ($iterator as $item) {
         $target = "{$package}/vendor/".mb_substr($item->getPathname(), mb_strlen($vendor) + 1);
-
-        if ($item->isLink()) {
-            continue;
-        }
 
         if ($item->isDir()) {
             File::ensureDirectoryExists($target);

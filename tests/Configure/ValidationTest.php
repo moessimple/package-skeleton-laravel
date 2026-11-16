@@ -41,7 +41,7 @@ it('rejects an invalid value with its reason and changes nothing', function (str
 it('rejects empty, blank, control-character and invalid UTF-8 values for every field', function (string $option, string $label): void {
     $result = configurePackage($this->package, ['--no-interaction', $option]);
 
-    expect($result->exitCode())->toBe(1)
+    expect($result->exitCode())->toBe(1, $result->output())
         ->and(configureResult($result->output()))
         ->toHaveKey('success', false)
         ->toHaveKey('errors', ["{$label}: Enter a non-empty UTF-8 value without control characters."])
