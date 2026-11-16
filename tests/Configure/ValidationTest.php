@@ -52,6 +52,7 @@ it('rejects empty, blank, control-character and invalid UTF-8 values for every f
     'an empty author email' => ['--author-email=', 'Author email'],
     'a blank author email' => ['--author-email=   ', 'Author email'],
     'a package name with a tab' => ["--package-name=acme/shop\ttools", 'Package name'],
+    'an empty display name' => ['--package-name-human=', 'Package display name'],
     'a display name with a newline' => ["--package-name-human=Shop\nTools", 'Package display name'],
     'a description with invalid UTF-8' => ["--package-description=Shop \xFF Tools", 'Package description'],
     'an empty vendor namespace' => ['--vendor-namespace=', 'Vendor namespace'],

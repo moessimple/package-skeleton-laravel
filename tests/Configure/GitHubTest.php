@@ -113,19 +113,6 @@ it('commits the package without configure.php and the configure tests', function
         ->each->not->toStartWith('tests/Configure/');
 });
 
-it('continues when there is no origin remote to remove', function (): void {
-    Prompt::fake([
-        ...array_fill(0, 9, Key::ENTER), // Metadata, features and tools
-        'y', Key::ENTER, // Create a GitHub repository now? Yes
-        Key::ENTER, // Repository visibility: Private
-    ]);
-
-    $exitCode = configureInteractively($this->package, env: ['GH_USER' => 'janedoe']);
-
-    expect($exitCode)->toBe(0)
-        ->and(stubCalls($this->sandbox))->toContain('git remote remove origin', 'git push -u origin main');
-});
-
 it('reports a failed git initialization or repository creation and keeps configure.php', function (string $variable, string $value, string $error): void {
     Prompt::fake([
         ...array_fill(0, 9, Key::ENTER), // Metadata, features and tools

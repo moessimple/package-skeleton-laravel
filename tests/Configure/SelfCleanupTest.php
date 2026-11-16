@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Process;
 
 beforeEach(function (): void {
     $this->sandbox = createSandbox();
@@ -35,19 +36,33 @@ it('removes the configure test registrations and keeps the package test suites',
         ->toContain('<testsuite name="Unit">');
 });
 
-it('removes the configure test commands from the Composer scripts', function (): void {
+it('removes the configure hooks and test commands from the Composer scripts', function (): void {
+    $result = configurePackage($this->package, ['--no-interaction']);
+    $composer = File::json("{$this->package}/composer.json");
+
+    expect($result->exitCode())->toBe(0)
+        ->and($composer)->not->toHaveKeys(['scripts.post-install-cmd', 'scripts.post-update-cmd', 'scripts.test:configure'])
+        ->toHaveKeys(['scripts.post-autoload-dump', 'scripts.clear', 'scripts.lint'])
+        ->and(data_get($composer, 'scripts.test'))->not->toContain('@test:configure')
+        ->toContain('@test:lint', '@test:types', '@test:unit');
+});
+
+it('removes configure.php and the configure tests from the PHPStan and Rector configuration', function (): void {
     $result = configurePackage($this->package, ['--no-interaction']);
 
     expect($result->exitCode())->toBe(0)
-        ->and(File::json("{$this->package}/composer.json")['scripts'])->not->toHaveKey('test:configure')
-        ->toHaveKey('test', ['@test:composer', '@test:lint', '@test:type-coverage', '@test:types', '@test:unit']);
+        ->and(File::get("{$this->package}/phpstan.neon.dist"))->not->toContain('configure.php')
+        ->toContain('- src/')
+        ->and(File::get("{$this->package}/rector.php"))->not->toContain('configure.php')
+        ->not->toContain('tests/Configure')
+        ->toContain("__DIR__.'/src'")
+        ->and(Process::run([PHP_BINARY, '-l', "{$this->package}/rector.php"])->exitCode())->toBe(0);
 });
 
 it('removes the configure tests even when a later step fails', function (): void {
     $result = configurePackage($this->package, ['--no-interaction'], env: ['COMPOSER_LINT_FAILS' => '1']);
 
     expect($result->exitCode())->toBe(1)
-        ->and("{$this->package}/configure.php")->toBeFile()
         ->and("{$this->package}/tests/Configure")->not->toBeDirectory();
 });
 

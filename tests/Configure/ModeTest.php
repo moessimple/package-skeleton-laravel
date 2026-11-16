@@ -59,6 +59,26 @@ it('asks for the metadata in a terminal without a non-interactive signal', funct
         ->and("{$this->package}/configure.php")->toBeFile();
 })->skipOnWindows();
 
+it('rejects an invalid option with the usage on the terminal without a non-interactive signal', function (): void {
+    $process = configureProcessInTerminal($this->package, ['--unknown-option']);
+
+    $process->run();
+
+    expect($process->getExitCode())->toBe(1)
+        ->and($process->getErrorOutput())->toContain('The "--unknown-option" option does not exist.')
+        ->and($process->getOutput())->toContain('Usage: php configure.php [options]')
+        ->not->toContain('"success"');
+})->skipOnWindows();
+
+it('rejects an invalid option as a JSON error in a terminal when a coding agent runs it', function (): void {
+    $process = configureProcessInTerminal($this->package, ['--unknown-option'], env: ['AI_AGENT' => 'example-agent']);
+
+    $process->run();
+
+    expect($process->getExitCode())->toBe(1)
+        ->and(configureResult($process->getOutput()))->toHaveKey('errors', ['The "--unknown-option" option does not exist.']);
+})->skipOnWindows();
+
 it('reports missing dependencies on standard error in a terminal without a non-interactive signal', function (): void {
     $process = configureProcessInTerminal($this->package, withDependencies: false);
 

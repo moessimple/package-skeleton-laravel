@@ -74,33 +74,6 @@ it('leaves binary files, Composer files and skipped directories untouched', func
         ->and(File::json("{$this->package}/composer.json"))->toHaveKey('support.issues', 'https://github.com/vendor-name/laravel-package-name/issues');
 });
 
-it('leaves configure.php untouched when a step fails', function (): void {
-    $original = File::get("{$this->package}/configure.php");
-
-    $result = configurePackage($this->package, ['--no-interaction', '--package-name=acme/laravel-shop-tools'], env: ['COMPOSER_LINT_FAILS' => '1']);
-
-    expect($result->exitCode())->toBe(1)
-        ->and(File::get("{$this->package}/configure.php"))->toBe($original);
-});
-
-it('removes every Chisel marker', function (): void {
-    $result = configurePackage($this->package, ['--no-interaction', '--config', '--views', '--facade']);
-
-    expect($result->exitCode())->toBe(0)
-        ->and(array_keys(array_filter(directoryContents($this->package), fn (string $contents): bool => str_contains($contents, '@chisel') || str_contains($contents, '@end-chisel'))))->toBe([]);
-});
-
-it('removes the directories that are left empty', function (): void {
-    $result = configurePackage($this->package, ['--no-interaction', '--config']);
-
-    expect($result->exitCode())->toBe(0)
-        ->and("{$this->package}/resources")->not->toBeDirectory()
-        ->and("{$this->package}/database")->not->toBeDirectory()
-        ->and("{$this->package}/src/Console")->not->toBeDirectory()
-        ->and("{$this->package}/.github/workflows")->toBeDirectory()
-        ->and(configureResult($result->output())['summary']['removed_paths'])->toContain('resources', 'database', 'src/Console');
-});
-
 it('completes when optional files are already missing', function (): void {
     File::deleteDirectory("{$this->package}/config");
     File::delete([

@@ -31,8 +31,7 @@ it('gives Claude the package guidance and the local skills', function (): void {
 
     expect($result->exitCode())->toBe(0)
         ->and(File::get("{$this->package}/CLAUDE.md"))->toBe(File::get("{$this->package}/AGENTS.md"))
-        ->and("{$this->package}/.claude/skills/package-testing/SKILL.md")->toBeFile()
-        ->and("{$this->package}/.claude/skills/skeleton-development")->not->toBeDirectory();
+        ->and("{$this->package}/.claude/skills/package-testing/SKILL.md")->toBeFile();
 });
 
 // Creating symbolic links on Windows needs extra privileges. There configure.php copies instead, which

@@ -65,6 +65,32 @@ it('shows how to start developing when the Laravel installer passes its director
     Prompt::assertStrippedOutputContains('Package configured successfully');
 });
 
+it('shows how to start developing even when no tool adds a next step', function (): void {
+    Prompt::fake([
+        ...array_fill(0, 8, Key::ENTER), // Metadata and features
+        Key::CTRL_A, Key::ENTER, // Package Tools: none
+    ]);
+
+    $exitCode = configureInteractively($this->package, ['--installer-dir=laravel-example']);
+
+    expect($exitCode)->toBe(0);
+    Prompt::assertStrippedOutputContains('Next Steps');
+    Prompt::assertStrippedOutputContains('cd laravel-example');
+    Prompt::assertStrippedOutputDoesntContain('Review Dependabot pull requests before merging.');
+});
+
+it('preselects the features and tools given as flags', function (): void {
+    Prompt::fake(array_fill(0, 9, Key::ENTER));
+
+    $exitCode = configureInteractively($this->package, ['--config', '--funding']);
+
+    expect($exitCode)->toBe(0)
+        ->and("{$this->package}/config/example.php")->toBeFile()
+        ->and("{$this->package}/routes")->not->toBeDirectory()
+        ->and("{$this->package}/.github/FUNDING.yml")->toBeFile()
+        ->and("{$this->package}/.github/dependabot.yml")->not->toBeFile();
+});
+
 it('creates a package without optional resources when every feature and tool is deselected', function (): void {
     Prompt::fake([
         ...array_fill(0, 7, Key::ENTER), // Metadata

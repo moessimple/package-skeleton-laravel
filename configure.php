@@ -95,20 +95,6 @@ trait InteractsWithGitHub
         return $this->ghAuthenticated = $result['success'];
     }
 
-    private function ghRepoExists(string $repo): bool
-    {
-        if (! $this->ghIsAuthenticated()) {
-            return false;
-        }
-
-        $result = $this->runCommand(
-            ['gh', 'repo', 'view', $repo, '--json', 'name'],
-            getcwd() ?: __DIR__,
-        );
-
-        return $result['success'];
-    }
-
     private function ghUsername(): ?string
     {
         if ($this->ghUsername !== null) {
@@ -224,7 +210,7 @@ class Metadata
 
     public function className(): string
     {
-        return $this->data['class_name'] ?? '';
+        return $this->data['class_name'];
     }
 
     /** @return array<string, array{label: string, hint: string, default: Closure(): string, validate?: Closure(string): ?string}> */
@@ -268,13 +254,7 @@ class Metadata
             'package_name_human' => [
                 'label' => 'Package display name',
                 'hint' => 'Used as the readable package name in README.',
-                'default' => function (): string {
-                    if ($value = $this->option('package-name-human')) {
-                        return $value;
-                    }
-
-                    return $this->headline(str_replace('-', ' ', $this->packageSlug()));
-                },
+                'default' => fn (): string => $this->option('package-name-human') ?? $this->headline(str_replace('-', ' ', $this->packageSlug())),
             ],
             'package_description' => [
                 'label' => 'Package description',
@@ -457,9 +437,6 @@ class Tool
     /** @var (Closure(self): mixed)|null */
     private ?Closure $removeCallback = null;
 
-    /** @var (Closure(self): mixed)|null */
-    private ?Closure $addCallback = null;
-
     /** @param list<string> $manualSteps */
     public function __construct(
         public readonly string $key,
@@ -490,11 +467,6 @@ class Tool
         $this->manualSteps = [];
     }
 
-    public function removeManualStep(int $index): void
-    {
-        array_splice($this->manualSteps, $index, 1);
-    }
-
     /** @return list<string> */
     public function manualSteps(): array
     {
@@ -509,27 +481,12 @@ class Tool
         return $this;
     }
 
-    /** @param Closure(self): mixed $callback */
-    public function onAdd(Closure $callback): self
-    {
-        $this->addCallback = $callback;
-
-        return $this;
-    }
-
     public function remove(): void
     {
         $this->clearManualSteps();
 
         if ($this->removeCallback instanceof Closure) {
             ($this->removeCallback)($this);
-        }
-    }
-
-    public function add(): void
-    {
-        if ($this->addCallback instanceof Closure) {
-            ($this->addCallback)($this);
         }
     }
 }
@@ -584,7 +541,7 @@ class Tools
 
 /**
  * @phpstan-type Summary array{metadata: array<string, string>, selected_features: list<string>, selected_tools: list<string>, removed_paths: list<string>, modified_files: list<string>, manual_steps: list<string>}
- * @phpstan-type Result array{success: bool, errors: list<string>, summary: Summary, github?: array<string, mixed>, command?: list<string>, commands?: list<list<string>>, created_repositories?: list<string>}
+ * @phpstan-type Result array{success: bool, errors: list<string>, summary: Summary}
  */
 class LaravelPackageSkeletonConfigurator
 {
@@ -655,8 +612,12 @@ class LaravelPackageSkeletonConfigurator
         try {
             $input = $this->input();
         } catch (RuntimeException $runtimeException) {
-            fwrite(STDERR, $runtimeException->getMessage().PHP_EOL.PHP_EOL);
-            $this->printHelp();
+            if ($this->hasNonInteractiveSignals() || AgentDetector::detect()->isAgent) {
+                $this->writeJson($this->failed($runtimeException->getMessage()));
+            } else {
+                fwrite(STDERR, $runtimeException->getMessage().PHP_EOL.PHP_EOL);
+                $this->printHelp();
+            }
 
             return self::FAILURE;
         }
@@ -678,35 +639,25 @@ class LaravelPackageSkeletonConfigurator
 
     /**
      * @param  string|list<string>  $errors
-     * @param  array{summary?: Summary, github?: Result, command?: list<string>, commands?: list<list<string>>, created_repositories?: list<string>}  $extra
      * @return Result
      */
-    private function failed(string|array $errors, array $extra = []): array
+    private function failed(string|array $errors): array
     {
-        return $this->response(false, $errors, $extra);
-    }
-
-    /**
-     * @param  array{summary?: Summary, github?: Result, command?: list<string>, commands?: list<list<string>>, created_repositories?: list<string>}  $extra
-     * @return Result
-     */
-    private function success(array $extra = []): array
-    {
-        return $this->response(true, [], $extra);
-    }
-
-    /**
-     * @param  string|list<string>  $errors
-     * @param  array{summary?: Summary, github?: Result, command?: list<string>, commands?: list<list<string>>, created_repositories?: list<string>}  $extra
-     * @return Result
-     */
-    private function response(bool $success, string|array $errors = [], array $extra = []): array
-    {
-        return array_merge([
-            'success' => $success,
+        return [
+            'success' => false,
             'errors' => is_array($errors) ? $errors : [$errors],
             'summary' => $this->summary,
-        ], $extra);
+        ];
+    }
+
+    /** @return Result */
+    private function success(): array
+    {
+        return [
+            'success' => true,
+            'errors' => [],
+            'summary' => $this->summary,
+        ];
     }
 
     private function dependenciesAreInstalled(): bool
@@ -763,12 +714,17 @@ class LaravelPackageSkeletonConfigurator
             return self::FAILURE;
         }
 
-        $installerSteps = [];
+        $nextSteps = [];
+
+        if ($result['summary']['manual_steps'] !== []) {
+            $nextSteps[] = Element::bulletedList($result['summary']['manual_steps'], spaced: true);
+        }
 
         $installerDirectory = $this->input()->getOption('installer-dir');
 
         if (is_string($installerDirectory) && $installerDirectory !== '') {
-            $installerSteps = [
+            $nextSteps = [
+                ...$nextSteps,
                 'You can start your local development using:',
                 "`cd {$installerDirectory}`",
                 "\e[1mNew to Laravel?\e[22m".' Check out our '.Element::link(
@@ -779,14 +735,8 @@ class LaravelPackageSkeletonConfigurator
             ];
         }
 
-        if ($result['summary']['manual_steps'] !== []) {
-            callout(
-                label: 'Next Steps',
-                content: [
-                    Element::bulletedList($result['summary']['manual_steps'], spaced: true),
-                    ...$installerSteps,
-                ],
-            );
+        if ($nextSteps !== []) {
+            callout(label: 'Next Steps', content: $nextSteps);
         }
 
         outro('Package configured successfully');
@@ -809,22 +759,9 @@ class LaravelPackageSkeletonConfigurator
             'tools' => $this->flaggedTools() ?: $this->tools->keys(),
         ]);
 
-        $this->writeJson($this->nonInteractivePayload($result));
+        $this->writeJson($result);
 
         return $result['success'] ? self::SUCCESS : self::FAILURE;
-    }
-
-    /**
-     * @param  Result  $result
-     * @return Result
-     */
-    private function nonInteractivePayload(array $result): array
-    {
-        $success = $result['success'];
-
-        return $this->response($success, $result['errors'], [
-            'summary' => $result['summary'],
-        ]);
     }
 
     /** @return list<string> */
@@ -984,10 +921,9 @@ class LaravelPackageSkeletonConfigurator
             Feature::from(
                 key: 'facade',
                 label: 'Facade',
-            )->onRemove(function () use ($featureTest, $readme): void {
+            )->onRemove(function () use ($featureTest): void {
                 $this->removePath('src/Facades');
                 $this->removeChiselSection($featureTest, 'facade');
-                $this->removeMarkdownSection($readme, 'Facade');
             }),
         );
 
@@ -1010,7 +946,7 @@ class LaravelPackageSkeletonConfigurator
             )->onRemove(function (): void {
                 $this->removePath('resources/boost/skills');
                 $this->removePath('.agents/skills/package-generate-skill');
-                $this->removeLinesContaining($this->rootDir.'/AGENTS.md', ['Boost', 'boost']);
+                $this->removeLinesContaining($this->rootDir.'/AGENTS.md', ['Boost']);
             }),
         );
     }
@@ -1117,15 +1053,11 @@ class LaravelPackageSkeletonConfigurator
         }
 
         if ($this->isGithubMode('create')) {
-            $github = $this->createGitHubRepository($this->githubConfig);
+            $githubError = $this->createGitHubRepository($this->githubConfig);
 
-            if (! $github['success']) {
-                return $this->failed($github['errors'], ['github' => $github]);
+            if ($githubError !== null) {
+                return $this->failed($githubError);
             }
-        }
-
-        foreach ($selectedTools as $toolToAdd) {
-            $this->tools->get($toolToAdd)->add();
         }
 
         $this->summary['manual_steps'] = $this->tools->manualSteps();
@@ -1143,7 +1075,7 @@ class LaravelPackageSkeletonConfigurator
         sort($this->summary['modified_files']);
         sort($this->summary['removed_paths']);
 
-        return $this->success(['summary' => $this->summary]);
+        return $this->success();
     }
 
     private function replacePlaceholders(): void
@@ -1332,10 +1264,6 @@ class LaravelPackageSkeletonConfigurator
                 'role' => 'Developer',
             ],
         ];
-        $composer['scripts']['clear'] = [
-            '@php vendor/bin/testbench package:purge-skeleton --ansi',
-        ];
-
         unset($composer['scripts']['post-install-cmd']);
         unset($composer['scripts']['post-update-cmd']);
         unset($composer['scripts']['test:configure']);
@@ -1738,64 +1666,41 @@ class LaravelPackageSkeletonConfigurator
 
     /**
      * @param  array{mode: string, visibility?: string}  $github
-     * @return Result
+     * @return string|null The error message, or null when the repository was created and the initial commit pushed.
      */
-    private function createGitHubRepository(array $github): array
+    private function createGitHubRepository(array $github): ?string
     {
         $visibility = match ($github['visibility'] ?? '') {
             'public' => 'public',
             default => 'private',
         };
-        $repository = $this->metadata->packageName();
-        $commands = [];
         $configurePath = $this->rootDir.'/configure.php';
         $configureContents = file_exists($configurePath)
             ? file_get_contents($configurePath)
             : false;
-        $createCommand = [
-            'gh',
-            'repo',
-            'create',
-            $repository,
-            '--'.$visibility,
-            '--source=.',
-            '--remote=origin',
-        ];
-        $insideGitCommand = ['git', 'rev-parse', '--is-inside-work-tree'];
-        $commands[] = $insideGitCommand;
-        $insideGitResult = $this->runCommand($insideGitCommand);
 
-        if (! $insideGitResult['success']) {
-            $initCommand = ['git', 'init'];
-            $commands[] = $initCommand;
-            $initResult = $this->runCommand($initCommand);
+        if (! $this->runCommand(['git', 'rev-parse', '--is-inside-work-tree'])['success']) {
+            $initResult = $this->runCommand(['git', 'init']);
 
             if (! $initResult['success']) {
-                return $this->failed(
-                    'Git repository initialization failed: '.$initResult['output'],
-                    [
-                        'command' => $initCommand,
-                        'commands' => $commands,
-                    ],
-                );
+                return 'Git repository initialization failed: '.$initResult['output'];
             }
         }
 
-        $removeOriginCommand = ['git', 'remote', 'remove', 'origin'];
-        $commands[] = $removeOriginCommand;
-        $this->runCommand($removeOriginCommand);
+        $this->runCommand(['git', 'remote', 'remove', 'origin']);
 
-        $commands[] = $createCommand;
-        $result = $this->runCommand($createCommand);
+        $result = $this->runCommand([
+            'gh',
+            'repo',
+            'create',
+            $this->metadata->packageName(),
+            '--'.$visibility,
+            '--source=.',
+            '--remote=origin',
+        ]);
 
         if (! $result['success']) {
-            return $this->failed(
-                'GitHub repository creation failed: '.$result['output'],
-                [
-                    'command' => $createCommand,
-                    'commands' => $commands,
-                ],
-            );
+            return 'GitHub repository creation failed: '.$result['output'];
         }
 
         $this->removePath('configure.php');
@@ -1817,7 +1722,6 @@ class LaravelPackageSkeletonConfigurator
         ];
 
         foreach ($gitCommands as $gitCommand) {
-            $commands[] = $gitCommand;
             $gitResult = $this->runCommand($gitCommand);
 
             if (! $gitResult['success']) {
@@ -1826,26 +1730,11 @@ class LaravelPackageSkeletonConfigurator
                     $configureContents,
                 );
 
-                return $this->failed(
-                    'Initial commit push failed: '.$gitResult['output'],
-                    [
-                        'command' => $gitCommand,
-                        'commands' => $commands,
-                        'created_repositories' => [
-                            'https://github.com/'.$repository,
-                        ],
-                    ],
-                );
+                return 'Initial commit push failed: '.$gitResult['output'];
             }
         }
 
-        return $this->success(
-            [
-                'command' => $createCommand,
-                'commands' => $commands,
-                'created_repositories' => ['https://github.com/'.$repository],
-            ],
-        );
+        return null;
     }
 
     private function restoreConfigureScript(string $path, string|false $contents): void
@@ -1869,6 +1758,10 @@ class LaravelPackageSkeletonConfigurator
             AgentDetector::detect()->isAgent;
     }
 
+    /**
+     * Detects non-interactive mode without the parsed options and without AgentDetector, so that it also
+     * works when the options are invalid or the dependencies are not installed yet.
+     */
     private function hasNonInteractiveSignals(): bool
     {
         return getenv('COMPOSER_NO_INTERACTION') === '1' ||
@@ -1913,7 +1806,7 @@ class LaravelPackageSkeletonConfigurator
             fn (string $key, array $field): InputOption => new InputOption(
                 str_replace('_', '-', $key),
                 null,
-                InputOption::VALUE_OPTIONAL,
+                InputOption::VALUE_REQUIRED,
                 $field['label'],
             ),
             array_keys($this->metadata->fields()),

@@ -14,6 +14,8 @@ afterEach(function (): void {
 });
 
 it('reports a failed formatting step with its output and stops before removing dependencies', function (): void {
+    $configure = File::get("{$this->package}/configure.php");
+
     $result = configurePackage($this->package, ['--no-interaction'], env: ['COMPOSER_LINT_FAILS' => '1']);
 
     expect($result->exitCode())->toBe(1)
@@ -23,7 +25,7 @@ it('reports a failed formatting step with its output and stops before removing d
         ->and(stubCalls($this->sandbox))->toContain('composer lint')
         ->not->toContain('composer remove --dev --no-install --no-scripts --no-audit --quiet laravel/agent-detector laravel/chisel laravel/prompts')
         ->not->toContain('composer dump-autoload --quiet')
-        ->and("{$this->package}/configure.php")->toBeFile();
+        ->and(File::get("{$this->package}/configure.php"))->toBe($configure);
 });
 
 it('reports a failed dependency removal with its output and keeps configure.php', function (): void {

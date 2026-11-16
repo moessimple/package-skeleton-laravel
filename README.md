@@ -66,7 +66,7 @@ Omitting feature flags includes every package feature; passing specific flags in
 
 Pass `--package-name=acme/laravel-example`, `--vendor-namespace=Acme`, `--class-name=Example`, `--package-description="An example package."`, `--author-name="Jane Doe"` and `--author-email=jane@example.com` to prefill the metadata.
 
-Non-interactive runs print a single line of JSON describing the result, including the resolved metadata, selected features and tools, and any manual follow-up steps. Invalid metadata options fail with a JSON error before any files are changed.
+Non-interactive runs print a single line of JSON describing the result, including the resolved metadata, selected features and tools, and any manual follow-up steps. Invalid options fail with a JSON error before any files are changed.
 
 During configuration, `README_PACKAGE.md` and `AGENTS_PACKAGE.md` are customized and moved to `README.md` and `AGENTS.md`, replacing the skeleton files. The script also links `CLAUDE.md` to `AGENTS.md` and `.claude` to `.agents` so both agent formats share the same guidance.
 

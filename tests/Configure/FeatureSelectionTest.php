@@ -13,126 +13,106 @@ afterEach(function (): void {
     File::deleteDirectory($this->sandbox);
 });
 
-it('removes the configuration file feature when it is not selected', function (): void {
-    $result = configurePackage($this->package, ['--no-interaction', '--routes', '--views', '--translations', '--commands', '--migrations', '--facade', '--assets', '--boost-skill']);
+/**
+ * Per feature: one file that exists only with the feature, the paths its removal deletes, and the text
+ * its removal takes out of files that remain. The text is checked in both directions, so a renamed
+ * README heading or provider call cannot let a removal test pass without removing anything.
+ *
+ * @return array<string, array{string, string, list<string>, array<string, list<string>>}>
+ */
+function featureRemovals(): array
+{
+    $provider = 'src/ExampleServiceProvider.php';
+    $test = 'tests/Feature/ExampleTest.php';
 
-    expect($result->exitCode())->toBe(0)
-        ->and("{$this->package}/config")->not->toBeFile()->not->toBeDirectory()
-        ->and(File::get("{$this->package}/src/ExampleServiceProvider.php"))->not->toContain('hasConfigFile')
-        ->and(File::get("{$this->package}/tests/Feature/ExampleTest.php"))->not->toContain('merges the package config')->not->toContain("'example-config'")
-        ->and(File::get("{$this->package}/README.md"))->not->toContain('Publishing the Configuration File')->not->toContain('example-config')
-        ->and(File::get("{$this->package}/phpstan.neon.dist"))->not->toContain('- config')
-        ->and(File::get("{$this->package}/rector.php"))->not->toContain("__DIR__.'/config'")
-        ->and(File::get("{$this->package}/src/ExampleServiceProvider.php"))->not->toContain('chisel')
-        ->and(File::get("{$this->package}/tests/Feature/ExampleTest.php"))->not->toContain('chisel')
-        ->and(array_map(fn (string $path): string => "{$this->package}/{$path}", ['routes/example.php', 'resources/views/placeholder.blade.php', 'resources/lang/en/messages.php', 'src/Console/Commands/ExampleCommand.php', 'database/migrations/create_example_placeholder_table.php', 'src/Facades/Example.php', 'resources/dist/.gitkeep', 'resources/boost/skills/example-development/SKILL.md']))->each->toBeFile();
+    return [
+        'config' => ['config', 'config/example.php', ['config'], [
+            $provider => ['hasConfigFile'],
+            $test => ['merges the package config', "'example-config'"],
+            'README.md' => ['Publishing the Configuration File', 'example-config'],
+            'phpstan.neon.dist' => ['- config'],
+            'rector.php' => ["__DIR__.'/config'"],
+        ]],
+        'routes' => ['routes', 'routes/example.php', ['routes'], [
+            $provider => ['hasRoute'],
+            'phpstan.neon.dist' => ['- routes'],
+            'rector.php' => ["__DIR__.'/routes'"],
+        ]],
+        'views' => ['views', 'resources/views/placeholder.blade.php', ['resources/views'], [
+            $provider => ['hasViews'],
+            $test => ['loads the package views', "'example-views'"],
+            'README.md' => ['Publishing the Views', 'example-views'],
+        ]],
+        'translations' => ['translations', 'resources/lang/en/messages.php', ['resources/lang'], [
+            $provider => ['hasTranslations'],
+            $test => ['loads the package translations', "'example-translations'"],
+            'README.md' => ['Publishing the Translations', 'example-translations'],
+        ]],
+        'commands' => ['commands', 'src/Console/Commands/ExampleCommand.php', ['src/Console', 'tests/Feature/OutsideConsoleTest.php'], [
+            $provider => ['hasConsoleCommand', 'ExampleCommand'],
+            $test => ['registers the artisan command'],
+        ]],
+        'migrations' => ['migrations', 'database/migrations/create_example_placeholder_table.php', ['database'], [
+            $provider => ['hasMigration'],
+            $test => ["'example-migrations'"],
+            'README.md' => ['Publishing and Running the Migrations', 'example-migrations'],
+            'phpstan.neon.dist' => ['- database'],
+            'rector.php' => ["__DIR__.'/database'"],
+        ]],
+        'facade' => ['facade', 'src/Facades/Example.php', ['src/Facades'], [
+            $test => ['resolves the facade', 'Facades\\Example', "'aliases' =>"],
+            'composer.json' => ['aliases'],
+        ]],
+        'assets' => ['assets', 'resources/dist/.gitkeep', ['resources/dist'], [
+            $provider => ['hasAssets'],
+            $test => ["'example-assets'"],
+            'README.md' => ['Publishing the Public Assets', 'example-assets'],
+        ]],
+        'Boost skill' => ['boost_skill', 'resources/boost/skills/example-development/SKILL.md', ['resources/boost', '.agents/skills/package-generate-skill'], [
+            'AGENTS.md' => ['Boost'],
+        ]],
+    ];
+}
+
+it('keeps the files, registrations and documentation of every selected feature', function (): void {
+    $result = configurePackage($this->package, ['--no-interaction']);
+
+    expect($result->exitCode())->toBe(0);
+
+    foreach (featureRemovals() as [, $file, , $texts]) {
+        expect("{$this->package}/{$file}")->toBeFile();
+
+        foreach ($texts as $path => $needles) {
+            expect(File::get("{$this->package}/{$path}"))->toContain(...$needles);
+        }
+    }
 });
 
-it('removes the routes feature when it is not selected', function (): void {
-    $result = configurePackage($this->package, ['--no-interaction', '--config', '--views', '--translations', '--commands', '--migrations', '--facade', '--assets', '--boost-skill']);
+it('removes a feature that is not selected and keeps the others', function (string $name): void {
+    [$feature, $file, $removedPaths, $texts] = featureRemovals()[$name];
+    $flags = array_map(
+        fn (array $removal): string => '--'.str_replace('_', '-', $removal[0]),
+        array_filter(featureRemovals(), fn (array $removal): bool => $removal[0] !== $feature),
+    );
+
+    $result = configurePackage($this->package, ['--no-interaction', ...array_values($flags)]);
 
     expect($result->exitCode())->toBe(0)
-        ->and("{$this->package}/routes")->not->toBeFile()->not->toBeDirectory()
-        ->and(File::get("{$this->package}/src/ExampleServiceProvider.php"))->not->toContain('hasRoute')
-        ->and(File::get("{$this->package}/phpstan.neon.dist"))->not->toContain('- routes')
-        ->and(File::get("{$this->package}/rector.php"))->not->toContain("__DIR__.'/routes'")
-        ->and(File::get("{$this->package}/src/ExampleServiceProvider.php"))->not->toContain('chisel')
-        ->and(File::get("{$this->package}/tests/Feature/ExampleTest.php"))->not->toContain('chisel')
-        ->and(array_map(fn (string $path): string => "{$this->package}/{$path}", ['config/example.php', 'resources/views/placeholder.blade.php', 'resources/lang/en/messages.php', 'src/Console/Commands/ExampleCommand.php', 'database/migrations/create_example_placeholder_table.php', 'src/Facades/Example.php', 'resources/dist/.gitkeep', 'resources/boost/skills/example-development/SKILL.md']))->each->toBeFile();
-});
+        ->and(array_map(fn (string $path): string => "{$this->package}/{$path}", $removedPaths))->each->not->toBeFile()->not->toBeDirectory()
+        ->and(array_keys(array_filter(directoryContents($this->package), fn (string $contents): bool => str_contains($contents, '@chisel') || str_contains($contents, '@end-chisel'))))->toBe([]);
 
-it('removes the views feature when it is not selected', function (): void {
-    $result = configurePackage($this->package, ['--no-interaction', '--config', '--routes', '--translations', '--commands', '--migrations', '--facade', '--assets', '--boost-skill']);
+    foreach ($texts as $path => $needles) {
+        foreach ($needles as $needle) {
+            expect(File::get("{$this->package}/{$path}"))->not->toContain($needle);
+        }
+    }
 
-    expect($result->exitCode())->toBe(0)
-        ->and("{$this->package}/resources/views")->not->toBeFile()->not->toBeDirectory()
-        ->and(File::get("{$this->package}/src/ExampleServiceProvider.php"))->not->toContain('hasViews')
-        ->and(File::get("{$this->package}/tests/Feature/ExampleTest.php"))->not->toContain('loads the package views')->not->toContain("'example-views'")
-        ->and(File::get("{$this->package}/README.md"))->not->toContain('Publishing the Views')->not->toContain('example-views')
-        ->and(File::get("{$this->package}/src/ExampleServiceProvider.php"))->not->toContain('chisel')
-        ->and(File::get("{$this->package}/tests/Feature/ExampleTest.php"))->not->toContain('chisel')
-        ->and(array_map(fn (string $path): string => "{$this->package}/{$path}", ['config/example.php', 'routes/example.php', 'resources/lang/en/messages.php', 'src/Console/Commands/ExampleCommand.php', 'database/migrations/create_example_placeholder_table.php', 'src/Facades/Example.php', 'resources/dist/.gitkeep', 'resources/boost/skills/example-development/SKILL.md']))->each->toBeFile();
-});
+    $otherFiles = array_diff(array_column(featureRemovals(), 1), [$file]);
 
-it('removes the translations feature when it is not selected', function (): void {
-    $result = configurePackage($this->package, ['--no-interaction', '--config', '--routes', '--views', '--commands', '--migrations', '--facade', '--assets', '--boost-skill']);
+    expect(array_map(fn (string $path): string => "{$this->package}/{$path}", $otherFiles))->each->toBeFile();
+})->with(array_keys(featureRemovals()));
 
-    expect($result->exitCode())->toBe(0)
-        ->and("{$this->package}/resources/lang")->not->toBeFile()->not->toBeDirectory()
-        ->and(File::get("{$this->package}/src/ExampleServiceProvider.php"))->not->toContain('hasTranslations')
-        ->and(File::get("{$this->package}/tests/Feature/ExampleTest.php"))->not->toContain('loads the package translations')->not->toContain("'example-translations'")
-        ->and(File::get("{$this->package}/README.md"))->not->toContain('Publishing the Translations')->not->toContain('example-translations')
-        ->and(File::get("{$this->package}/src/ExampleServiceProvider.php"))->not->toContain('chisel')
-        ->and(File::get("{$this->package}/tests/Feature/ExampleTest.php"))->not->toContain('chisel')
-        ->and(array_map(fn (string $path): string => "{$this->package}/{$path}", ['config/example.php', 'routes/example.php', 'resources/views/placeholder.blade.php', 'src/Console/Commands/ExampleCommand.php', 'database/migrations/create_example_placeholder_table.php', 'src/Facades/Example.php', 'resources/dist/.gitkeep', 'resources/boost/skills/example-development/SKILL.md']))->each->toBeFile();
-});
-
-it('removes the commands feature when it is not selected', function (): void {
-    $result = configurePackage($this->package, ['--no-interaction', '--config', '--routes', '--views', '--translations', '--migrations', '--facade', '--assets', '--boost-skill']);
-
-    expect($result->exitCode())->toBe(0)
-        ->and("{$this->package}/src/Console")->not->toBeFile()->not->toBeDirectory()
-        ->and("{$this->package}/tests/Feature/OutsideConsoleTest.php")->not->toBeFile()->not->toBeDirectory()
-        ->and(File::get("{$this->package}/src/ExampleServiceProvider.php"))->not->toContain('hasConsoleCommand')->not->toContain('ExampleCommand')
-        ->and(File::get("{$this->package}/tests/Feature/ExampleTest.php"))->not->toContain('registers the artisan command')
-        ->and(File::get("{$this->package}/src/ExampleServiceProvider.php"))->not->toContain('chisel')
-        ->and(File::get("{$this->package}/tests/Feature/ExampleTest.php"))->not->toContain('chisel')
-        ->and(array_map(fn (string $path): string => "{$this->package}/{$path}", ['config/example.php', 'routes/example.php', 'resources/views/placeholder.blade.php', 'resources/lang/en/messages.php', 'database/migrations/create_example_placeholder_table.php', 'src/Facades/Example.php', 'resources/dist/.gitkeep', 'resources/boost/skills/example-development/SKILL.md']))->each->toBeFile();
-});
-
-it('removes the migrations feature when it is not selected', function (): void {
-    $result = configurePackage($this->package, ['--no-interaction', '--config', '--routes', '--views', '--translations', '--commands', '--facade', '--assets', '--boost-skill']);
-
-    expect($result->exitCode())->toBe(0)
-        ->and("{$this->package}/database")->not->toBeFile()->not->toBeDirectory()
-        ->and(File::get("{$this->package}/src/ExampleServiceProvider.php"))->not->toContain('hasMigration')
-        ->and(File::get("{$this->package}/tests/Feature/ExampleTest.php"))->not->toContain("'example-migrations'")
-        ->and(File::get("{$this->package}/README.md"))->not->toContain('Publishing and Running the Migrations')->not->toContain('example-migrations')
-        ->and(File::get("{$this->package}/phpstan.neon.dist"))->not->toContain('- database')
-        ->and(File::get("{$this->package}/rector.php"))->not->toContain("__DIR__.'/database'")
-        ->and(File::get("{$this->package}/src/ExampleServiceProvider.php"))->not->toContain('chisel')
-        ->and(File::get("{$this->package}/tests/Feature/ExampleTest.php"))->not->toContain('chisel')
-        ->and(array_map(fn (string $path): string => "{$this->package}/{$path}", ['config/example.php', 'routes/example.php', 'resources/views/placeholder.blade.php', 'resources/lang/en/messages.php', 'src/Console/Commands/ExampleCommand.php', 'src/Facades/Example.php', 'resources/dist/.gitkeep', 'resources/boost/skills/example-development/SKILL.md']))->each->toBeFile();
-});
-
-it('removes the facade feature and its alias when it is not selected', function (): void {
-    $result = configurePackage($this->package, ['--no-interaction', '--config', '--routes', '--views', '--translations', '--commands', '--migrations', '--assets', '--boost-skill']);
-
-    expect($result->exitCode())->toBe(0)
-        ->and("{$this->package}/src/Facades")->not->toBeFile()->not->toBeDirectory()
-        ->and(File::get("{$this->package}/tests/Feature/ExampleTest.php"))->not->toContain('resolves the facade')->not->toContain('Facades\\Example')->not->toContain("'aliases' =>")
-        ->and(File::get("{$this->package}/composer.json"))->not->toContain('aliases')
-        ->and(File::get("{$this->package}/src/ExampleServiceProvider.php"))->not->toContain('chisel')
-        ->and(File::get("{$this->package}/tests/Feature/ExampleTest.php"))->not->toContain('chisel')
-        ->and(array_map(fn (string $path): string => "{$this->package}/{$path}", ['config/example.php', 'routes/example.php', 'resources/views/placeholder.blade.php', 'resources/lang/en/messages.php', 'src/Console/Commands/ExampleCommand.php', 'database/migrations/create_example_placeholder_table.php', 'resources/dist/.gitkeep', 'resources/boost/skills/example-development/SKILL.md']))->each->toBeFile();
-});
-
-it('removes the assets feature when it is not selected', function (): void {
-    $result = configurePackage($this->package, ['--no-interaction', '--config', '--routes', '--views', '--translations', '--commands', '--migrations', '--facade', '--boost-skill']);
-
-    expect($result->exitCode())->toBe(0)
-        ->and("{$this->package}/resources/dist")->not->toBeFile()->not->toBeDirectory()
-        ->and(File::get("{$this->package}/src/ExampleServiceProvider.php"))->not->toContain('hasAssets')
-        ->and(File::get("{$this->package}/tests/Feature/ExampleTest.php"))->not->toContain("'example-assets'")
-        ->and(File::get("{$this->package}/README.md"))->not->toContain('Publishing the Public Assets')->not->toContain('example-assets')
-        ->and(File::get("{$this->package}/src/ExampleServiceProvider.php"))->not->toContain('chisel')
-        ->and(File::get("{$this->package}/tests/Feature/ExampleTest.php"))->not->toContain('chisel')
-        ->and(array_map(fn (string $path): string => "{$this->package}/{$path}", ['config/example.php', 'routes/example.php', 'resources/views/placeholder.blade.php', 'resources/lang/en/messages.php', 'src/Console/Commands/ExampleCommand.php', 'database/migrations/create_example_placeholder_table.php', 'src/Facades/Example.php', 'resources/boost/skills/example-development/SKILL.md']))->each->toBeFile();
-});
-
-it('removes the Boost skill and its guidance when it is not selected', function (): void {
-    $result = configurePackage($this->package, ['--no-interaction', '--config', '--routes', '--views', '--translations', '--commands', '--migrations', '--facade', '--assets']);
-
-    expect($result->exitCode())->toBe(0)
-        ->and("{$this->package}/resources/boost")->not->toBeFile()->not->toBeDirectory()
-        ->and("{$this->package}/.agents/skills/package-generate-skill")->not->toBeFile()->not->toBeDirectory()
-        ->and(File::get("{$this->package}/AGENTS.md"))->not->toContain('Boost')->not->toContain('boost')
-        ->and(File::get("{$this->package}/src/ExampleServiceProvider.php"))->not->toContain('chisel')
-        ->and(File::get("{$this->package}/tests/Feature/ExampleTest.php"))->not->toContain('chisel')
-        ->and(array_map(fn (string $path): string => "{$this->package}/{$path}", ['config/example.php', 'routes/example.php', 'resources/views/placeholder.blade.php', 'resources/lang/en/messages.php', 'src/Console/Commands/ExampleCommand.php', 'database/migrations/create_example_placeholder_table.php', 'src/Facades/Example.php', 'resources/dist/.gitkeep']))->each->toBeFile();
-});
-
-it('keeps only the explicitly selected feature and tool', function (): void {
+it('keeps only the explicitly selected feature and tool and removes the directories left empty', function (): void {
     $result = configurePackage($this->package, ['--no-interaction', '--config', '--security-policy']);
     $json = configureResult($result->output());
 
@@ -146,12 +126,13 @@ it('keeps only the explicitly selected feature and tool', function (): void {
         ->and("{$this->package}/database")->not->toBeDirectory()
         ->and("{$this->package}/src/Console")->not->toBeDirectory()
         ->and("{$this->package}/src/Facades")->not->toBeDirectory()
+        ->and("{$this->package}/.github/workflows")->toBeDirectory()
         ->and("{$this->package}/.github/dependabot.yml")->not->toBeFile()
         ->and("{$this->package}/.github/ISSUE_TEMPLATE")->not->toBeDirectory()
         ->and("{$this->package}/.github/FUNDING.yml")->not->toBeFile()
+        ->and($json['summary']['removed_paths'])->toContain('resources', 'database', 'src/Console')
         ->and(File::get("{$this->package}/src/ExampleServiceProvider.php"))
         ->toContain('$package->hasConfigFile();')
-        ->not->toContain('chisel')
         ->not->toContain('hasViews')
         ->not->toContain('hasRoute')
         ->not->toContain('hasMigration')
@@ -159,7 +140,6 @@ it('keeps only the explicitly selected feature and tool', function (): void {
         ->and(File::get("{$this->package}/tests/Feature/ExampleTest.php"))
         ->toContain("'example-config'")
         ->toContain('merges the package config')
-        ->not->toContain('chisel')
         ->not->toContain("'example-views'")
         ->not->toContain("'example-migrations'")
         ->and(File::get("{$this->package}/README.md"))
