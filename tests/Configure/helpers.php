@@ -6,6 +6,7 @@ use Illuminate\Contracts\Process\ProcessResult;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Process;
 use Illuminate\Support\Str;
+use Symfony\Component\Process\ExecutableFinder;
 use Symfony\Component\Process\Process as SymfonyProcess;
 
 /**
@@ -200,13 +201,17 @@ function configureInteractively(string $package, array $arguments = [], array $e
  * Prepares configure.php in $package as a process attached to a pseudo terminal, so that standard
  * input is a TTY as in an author's shell. The caller starts it. The Process facade cannot allocate a
  * pseudo terminal, and Windows has none, so tests using this skip Windows. The environment matches
- * configurePackage().
+ * configurePackage(), plus the real stty in the sandbox bin/ directory: Laravel Prompts switches the
+ * terminal to raw mode with stty, and without it every prompt fails before it renders.
  *
  * @param  list<string>  $arguments
  * @param  array<string, string|false>  $env
  */
 function configureProcessInTerminal(string $package, array $arguments = [], array $env = [], bool $withDependencies = true): SymfonyProcess
 {
+    $stty = (new ExecutableFinder)->find('stty') ?? throw new RuntimeException('The terminal tests need stty on the PATH.');
+    File::link($stty, dirname($package).'/bin/stty');
+
     $autoloader = $withDependencies
         ? ['-d', 'auto_prepend_file='.skeletonPath().'/vendor/autoload.php']
         : [];

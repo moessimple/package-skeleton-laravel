@@ -50,11 +50,12 @@ it('asks for the metadata in a terminal without a non-interactive signal', funct
     $process = configureProcessInTerminal($this->package);
 
     $process->start();
-    $process->waitUntil(fn (string $type, string $output): bool => str_contains($output, 'Author name'));
+    $process->waitUntil(fn (string $type, string $output): bool => str_contains($output, 'Used in composer.json credits and README attribution.'));
     $process->stop();
 
     expect($process->getOutput())->toContain('Configure your Laravel package')
         ->toContain('Author name')
+        ->toContain('Used in composer.json credits and README attribution.')
         ->not->toContain('"success"')
         ->and("{$this->package}/configure.php")->toBeFile();
 })->skipOnWindows();
