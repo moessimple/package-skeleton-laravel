@@ -236,12 +236,12 @@ class Metadata
             'author_name' => [
                 'label' => 'Author name',
                 'hint' => 'Used in composer.json credits and README attribution.',
-                'default' => fn () => $this->option('author-name') ?? $this->runCommand(['git', 'config', 'user.name'])['output'] ?: 'Vendor Name',
+                'default' => fn (): string => $this->option('author-name') ?? $this->gitConfig('user.name') ?: 'Vendor Name',
             ],
             'author_email' => [
                 'label' => 'Author email',
                 'hint' => 'Used in composer.json package author metadata.',
-                'default' => fn () => $this->option('author-email') ?? $this->runCommand(['git', 'config', 'user.email'])['output'] ?: 'author@example.com',
+                'default' => fn (): string => $this->option('author-email') ?? $this->gitConfig('user.email') ?: 'author@example.com',
                 'validate' => function (string $value): ?string {
                     if (filter_var($value, FILTER_VALIDATE_EMAIL) === false) {
                         return 'Must be a valid email address.';
@@ -347,6 +347,17 @@ class Metadata
     public function toArray(): array
     {
         return $this->data;
+    }
+
+    /**
+     * An unset key, a missing git and a failing call all yield an empty string, so the caller falls
+     * back to its default instead of using git's error output as a value.
+     */
+    private function gitConfig(string $key): string
+    {
+        $result = $this->runCommand(['git', 'config', $key]);
+
+        return $result['success'] ? $result['output'] : '';
     }
 
     private function option(string $name): ?string

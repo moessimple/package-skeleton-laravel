@@ -109,6 +109,19 @@ it('falls back to placeholder authors without a git identity', function (): void
         ->toHaveKey('package_name', 'vendor-name/laravel-example');
 });
 
+it('falls back to placeholder authors when git is not installed', function (): void {
+    $package = copySkeleton("{$this->sandbox}/laravel-example");
+    File::delete(["{$this->sandbox}/bin/git", "{$this->sandbox}/bin/git.cmd"]);
+
+    $result = configurePackage($package, ['--no-interaction']);
+
+    expect($result->exitCode())->toBe(0, $result->output())
+        ->and(configureResult($result->output())['summary']['metadata'])
+        ->toHaveKey('author_name', 'Vendor Name')
+        ->toHaveKey('author_email', 'author@example.com')
+        ->toHaveKey('package_name', 'vendor-name/laravel-example');
+});
+
 it('takes the vendor from the signed-in GitHub user', function (): void {
     $package = copySkeleton("{$this->sandbox}/laravel-example");
 
