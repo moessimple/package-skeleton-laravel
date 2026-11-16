@@ -45,11 +45,6 @@ trait FormatsStrings
     {
         return ucwords(str_replace(['-', '_'], ' ', $value));
     }
-
-    private function snake(string $value): string
-    {
-        return str_replace('-', '_', $this->slug($value));
-    }
 }
 
 trait InteractsWithGitHub
@@ -1455,12 +1450,6 @@ class LaravelPackageSkeletonConfigurator
             $this->removeChiselSection($featureTest, 'publish');
         } else {
             $this->removeChiselSectionMarkers($featureTest, 'publish');
-        }
-
-        if ($selectedFeatures === []) {
-            $this->removeChiselSection($this->providerPath(), 'any-features');
-        } else {
-            $this->removeChiselSectionMarkers($this->providerPath(), 'any-features');
         }
 
         foreach ($selectedFeatures as $section) {

@@ -55,6 +55,30 @@ php artisan vendor:publish --tag="package-name-assets"
 
 <!-- Add a basic usage example here. -->
 
+## Available Tooling
+
+### Development
+
+- `composer serve`: builds the workbench and serves a Laravel app with the package installed.
+- `composer build`: builds the workbench without serving it: publishes the assets and migrates a fresh SQLite database.
+
+### Security
+
+- `composer test:audit`: checks the installed dependencies for known vulnerabilities and abandoned packages.
+
+### Code Quality
+
+- `composer lint`: Rector and Pint, fixing in place.
+- `composer test:lint`: the same checks read-only (Rector `--dry-run`, Pint `--test`).
+- `composer test:composer`: validates `composer.json` strictly.
+
+### Testing
+
+- `composer test:types`: PHPStan at `level: max` over the package, tests and workbench.
+- `composer test:type-coverage`: fails under 100% type coverage (Pest).
+- `composer test:unit`: Pest in parallel under an exact 100% line-coverage gate.
+- `composer test`: the full gate, in order: `composer.json` validation, lint, type coverage, static analysis, tests.
+
 ## Changelog
 
 Please see the [releases](https://github.com/vendor-name/laravel-package-name/releases) for what has changed in each version.

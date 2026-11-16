@@ -6,11 +6,28 @@ This repository is a Laravel package. Keep the package focused, idiomatic, and e
 
 - Wire package resources through `spatie/laravel-package-tools` in `configurePackage()`. Config, view and translation namespaces and publish tags use the package short name. Translations live in `resources/lang` and assets in `resources/dist`.
 - Keep package names, namespaces, Composer metadata, publish tags, documentation, and examples aligned with `vendor-name/laravel-package-name`.
-- Add only the files and dependencies needed for the package behavior being implemented.
+- Add only the code, files, and dependencies the behavior needs: no speculative helpers, cache layers, or defensive checks.
 - Prefer explicit Laravel package code over helper abstractions unless the extension point is real.
+- Prefer Laravel collections and typed accessors over hand-written array handling and casts: `collect()`, `$response->collect()` and `$response->fluent()->integer('id')` for HTTP responses, `$request->string('name')`, `config()->string('package-name.key')`.
+- For large or repeated array shapes, define a `@phpstan-type` on the class that owns the data and reuse it with `@phpstan-import-type` instead of repeating the shape.
 - Keep tests focused on observable package behavior through public APIs, service provider wiring, commands, routes, published resources, and documentation promises.
 - Never lower the quality bar: no PHPStan baseline, `ignoreErrors`, `@codeCoverageIgnore`, or lowered coverage thresholds.
 - Treat the repository as public. Never write secrets, credentials, personal data or internal details into code, tests, documentation or GitHub text.
+
+## External Services
+
+- Put a network service the package's behavior depends on behind an interface in `src/Contracts`, named after the role it plays, not the vendor: `PaymentGateway`, not `Stripe`. Tests bind a fake of the interface and applications can swap the vendor, so this extension point is real.
+- Name the implementation after vendor and role (`StripePaymentGateway`). Bind it in the service provider with a closure that reads its config with typed accessors (`config()->string('package-name.api_key')`) and passes the values to the constructor. Mark credential parameters with `#[\SensitiveParameter]`.
+- The interface speaks the package's language. It returns a small readonly value object or an array described with `@phpstan-type`. Vendor URLs and payloads stay inside the implementation.
+- Only the implementation's own tests fake HTTP with `Http::fake()`. Every other test binds a fake of the interface.
+
+## Data
+
+- Guarantee uniqueness with a unique index, and handle a violation with `createOrFirst()` or by catching `UniqueConstraintViolationException`.
+- When a write depends on a check over other rows (a limit, the last remaining admin), lock the parent row with `lockForUpdate()` in a short `DB::transaction()` and check again under the lock, or use a conditional update and check the affected row count. Every writer must lock the same parent row. The SQLite test database ignores `lockForUpdate()`, so tests cannot prove the lock.
+- Name timestamp columns after the moment they record, ending in `_at`: `published_at`, not `publish_time`.
+- Hash passwords with the `hashed` cast. Store tokens the package looks up as `hash('sha256', $token)` in an indexed column, as Sanctum does, because a salted hash cannot be found with a query. Encrypt values it must read back, such as third-party credentials, with the `encrypted` cast in a `text` column. Encrypted columns cannot be filtered, indexed, or unique.
+- Never log secrets, tokens, request bodies, or personal data. Log identifiers and status codes. A `RequestException` message contains the start of the response body, so where a vendor response can carry sensitive data, catch it and throw a package exception without the body. Do not pass the `RequestException` as `previous`: the log includes previous exceptions.
 
 ## Quick Commands
 
@@ -20,6 +37,8 @@ This repository is a Laravel package. Keep the package focused, idiomatic, and e
 - Static analysis (PHPStan max): `composer test:types`
 - Type coverage (100%): `composer test:type-coverage`
 - Pest tests (100% line coverage): `composer test:unit`
+- composer.json validation: `composer test:composer`
+- Dependency audit: `composer test:audit`
 - Workbench build: `composer build`
 - Workbench server: `composer serve`
 
