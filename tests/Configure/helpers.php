@@ -9,8 +9,6 @@ use Illuminate\Support\Str;
 use Symfony\Component\Process\ExecutableFinder;
 use Symfony\Component\Process\Process as SymfonyProcess;
 
-use function Orchestra\Sidekick\Filesystem\is_symlink;
-
 /**
  * The skeleton checkout these tests belong to. Tests read from it but never write to it.
  */
@@ -89,8 +87,8 @@ function copySkeleton(string $destination): string
  * `composer remove` resolves and writes it. Links are neither copied nor followed: Testbench links its
  * Laravel skeleton back to the skeleton's vendor/ directory, and following that link would loop and let
  * the run write into the skeleton. On Windows that link is a junction, which PHP's is_link() does not
- * detect, so Testbench's own is_symlink() decides. Testbench creates the link again inside the copy when
- * it needs it.
+ * detect, so an entry counts as a link when its resolved path leaves its directory. Testbench creates the
+ * link again inside the copy when it needs it.
  */
 function copyDependencies(string $package): void
 {
@@ -98,7 +96,7 @@ function copyDependencies(string $package): void
     $iterator = new RecursiveIteratorIterator(
         new RecursiveCallbackFilterIterator(
             new RecursiveDirectoryIterator($vendor, FilesystemIterator::SKIP_DOTS),
-            fn (SplFileInfo $item): bool => ! is_symlink($item->getPathname()),
+            fn (SplFileInfo $item): bool => realpath($item->getPathname()) === realpath($item->getPath()).DIRECTORY_SEPARATOR.$item->getFilename(),
         ),
         RecursiveIteratorIterator::SELF_FIRST,
     );
